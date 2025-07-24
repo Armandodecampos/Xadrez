@@ -30,30 +30,43 @@
             border-radius: 15px;
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
             max-width: 90%;
+            width: 100%; /* Ensure it takes full width up to max-width */
             position: relative; /* Needed for absolute positioning of promotion modal */
         }
 
         .chessboard {
             display: grid;
-            grid-template-columns: repeat(8, 60px); /* Adjust square size for responsiveness */
-            grid-template-rows: repeat(8, 60px);
+            grid-template-columns: repeat(8, 1fr); /* Use fr units for fluid columns */
+            grid-template-rows: repeat(8, 1fr); /* Use fr units for fluid rows */
             border: 4px solid #4a5568;
             border-radius: 8px;
             overflow: hidden; /* Ensures rounded corners apply to squares */
             margin-bottom: 20px;
             box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
+            width: 100%; /* Make chessboard take full width of its container */
+            max-width: 480px; /* Max width for the chessboard (8 * 60px) */
+            aspect-ratio: 1 / 1; /* Maintain a 1:1 aspect ratio for the board */
         }
 
         .square {
-            width: 60px;
-            height: 60px;
+            width: 100%; /* Squares fill their grid cell */
+            height: 100%; /* Squares fill their grid cell */
+            aspect-ratio: 1 / 1; /* Garante que cada casa seja perfeitamente quadrada */
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 36px; /* Adjust piece size */
+            font-size: 5vw; /* Responsive font size */
+            max-font-size: 40px; /* Max font size for larger screens */
             cursor: pointer;
             user-select: none;
             transition: background-color 0.2s ease;
+        }
+
+        /* Adjust font size for pieces on smaller screens */
+        @media (max-width: 600px) {
+            .square {
+                font-size: 8vw; /* Larger font size for pieces on small screens */
+            }
         }
 
         .light {
@@ -76,7 +89,7 @@
 
         .piece {
             cursor: grab;
-            font-size: 38px; /* Slightly larger for better visibility */
+            /* font-size is now handled by .square */
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
             transition: transform 0.1s ease-out;
         }
@@ -104,6 +117,8 @@
 
         .control-buttons {
             display: flex;
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+            justify-content: center;
             gap: 15px;
             margin-top: 20px;
         }
@@ -118,6 +133,8 @@
             transition: background-color 0.3s ease, transform 0.2s ease;
             box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
             border: none;
+            flex-grow: 1; /* Allow buttons to grow and fill space */
+            min-width: 120px; /* Minimum width for buttons */
         }
 
         .game-button:hover:not(:disabled) {
@@ -194,6 +211,8 @@
             align-items: center;
             gap: 15px;
             border: 2px solid #4a5568;
+            width: 90%; /* Responsive width for modal */
+            max-width: 400px; /* Max width for modal */
         }
 
         .promotion-modal h3 {
@@ -205,6 +224,8 @@
 
         .promotion-options {
             display: flex;
+            flex-wrap: wrap; /* Allow buttons to wrap */
+            justify-content: center;
             gap: 15px;
         }
 
@@ -239,7 +260,6 @@
         @media (max-width: 600px) {
             .promotion-modal {
                 padding: 15px;
-                width: 90%;
             }
             .promotion-modal h3 {
                 font-size: 1.4rem;
@@ -1856,7 +1876,7 @@
                                 const targetPieceA = currentBoard[a[0]][a[1]]; // Piece at destination for move A
                                 const targetPieceB = currentBoard[b[0]][b[1]]; // Piece at destination for move B
                                 const valueA = targetPieceA ? Math.abs(PIECE_VALUES[targetPieceA]) : 0;
-                                const valueB = targetPieceB ? Math.abs(PICE_VALUES[targetPieceB]) : 0;
+                                const valueB = targetPieceB ? Math.abs(PIECE_VALUES[targetPieceB]) : 0;
                                 return valueB - valueA; // Prioritize captures of higher value pieces
                             });
 
@@ -2141,13 +2161,10 @@
                 // If it's a castling move, also move the rook in the simulated board
                 if (piece.toLowerCase() === 'k' && Math.abs(toC - fromC) === 2) {
                     let rookOriginalCol;
-                    let rookFinalCol;
                     if (toC > fromC) { // Kingside castling
                         rookOriginalCol = 7;
-                        rookFinalCol = fromC + 1;
                     } else { // Queenside castling
                         rookOriginalCol = 0;
-                        rookFinalCol = fromC - 1;
                     }
                     const rookPiece = newBoard[fromR][rookOriginalCol];
                     newBoard[fromR][rookFinalCol] = rookPiece;
