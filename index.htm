@@ -10,19 +10,57 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            /* Removido background-color do body para que a imagem de fundo seja visível */
             display: flex;
-            flex-direction: column; /* Organiza os filhos verticalmente */
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            min-height: 100vh; /* Garante que o corpo ocupe toda a altura da viewport */
+            min-height: 100vh;
             margin: 0;
-            color: #e2e8f0; /* Texto claro */
+            color: #e2e8f0;
             padding: 0;
             box-sizing: border-box;
-            width: 100vw; /* Garante que o body ocupe 100% da largura da viewport */
-            overflow: hidden; /* Evita barras de rolagem indesejadas */
-            background-color: #1a202c; /* Fundo do contêiner do jogo */
+            width: 100vw;
+            overflow: hidden;
+            background-color: #1a202c;
+        }
+
+        /* Loading Screen Styles */
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #1a202c; /* Cor de fundo escura */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999; /* Garante que esteja acima de tudo */
+            color: #e2e8f0;
+            font-size: 2rem;
+            font-weight: bold;
+            transition: opacity 0.5s ease-out; /* Transição suave ao desaparecer */
+        }
+
+        #loadingScreen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .spinner {
+            border: 8px solid rgba(255, 255, 255, 0.3);
+            border-top: 8px solid #48bb78; /* Cor do spinner */
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         /* Estilo para o fundo da tela inicial */
@@ -302,7 +340,7 @@
 
         .promotion-button:active {
             transform: translateY(0);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 2px 5px (0, 0, 0, 0.3);
         }
 
         /* Ajustes responsivos para o modal de promoção (media query original, ainda útil) */
@@ -328,11 +366,17 @@
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen">
+    <!-- Tela de Carregamento -->
+    <div id="loadingScreen">
+        <div class="spinner"></div>
+        <span>Carregando Jogo...</span>
+    </div>
+
     <!-- Background para a tela inicial -->
     <div id="mainMenuBackground" class="absolute inset-0 bg-cover bg-center bg-no-repeat hidden" style="background-image: url('https://dl.dropbox.com/scl/fi/3uw0rjjq8myl63qfpifkn/Xadrez.png?rlkey=elzhai342zvi7i2dh9udvcbwi&st=5ir07uua&dl=0');"></div>
 
     <!-- Seção do Menu Principal -->
-    <div id="mainMenu" class="main-menu z-10">
+    <div id="mainMenu" class="main-menu z-10 hidden">
         <h1 class="text-4xl font-bold mb-8 text-white">Jogo de Xadrez</h1>
         <button id="playVsComputerBtn" class="menu-button">Um Jogador</button>
         <button id="playVsPlayerBtn" class="menu-button">Dois Jogadores</button>
@@ -398,6 +442,7 @@
 
         let promotionTarget = null; // Armazena [linha, coluna] para promoção de peão
 
+        const loadingScreenElement = document.getElementById('loadingScreen'); // Novo elemento
         const mainMenuElement = document.getElementById('mainMenu');
         const gameContainerElement = document.getElementById('gameContainer');
         const chessboardElement = document.getElementById('chessboard');
@@ -411,6 +456,7 @@
         const promotionModal = document.getElementById('promotionModal');
         const promotionOptions = document.getElementById('promotionOptions');
         const mainMenuBackgroundElement = document.getElementById('mainMenuBackground');
+        const BACKGROUND_IMAGE_URL = 'https://dl.dropbox.com/scl/fi/3uw0rjjq8myl63qfpifkn/Xadrez.png?rlkey=elzhai342zvi7i2dh9udvcbwi&st=5ir07uua&dl=0'; // URL da imagem de fundo
 
         // Valores das peças para a função de avaliação (Sinais corrigidos para a perspectiva da IA - Preto é o jogador maximizador)
         const PIECE_VALUES = {
@@ -2252,8 +2298,8 @@
                 if (originalPiece === 'k') simulatedCastlingFlags.blackKingMoved = true;
                 if (originalPiece === 'R' && fromR === 7 && fromC === 0) simulatedCastlingFlags.whiteRookLeftMoved = true;
                 if (originalPiece === 'R' && fromR === 7 && fromC === 7) simulatedCastlingFlags.whiteRookRightMoved = true;
-                if (originalPiece === 'r' && fromR === 0 && fromC === 0) simulatedCastlingFlags.blackRookLeftMoved = true;
-                if (originalPiece === 'r' && fromR === 0 && fromC === 7) simulatedCastlingFlags.blackRookRightMoved = true;
+                if (originalPiece === 'r' && fromR === 0 && c === 0) simulatedCastlingFlags.blackRookLeftMoved = true;
+                if (originalPiece === 'r' && fromR === 0 && c === 7) simulatedCastlingFlags.blackRookRightMoved = true;
 
 
                 // Se for um movimento de roque, também move a torre no tabuleiro simulado
@@ -2348,7 +2394,23 @@
         // Inicializa o jogo sempre mostrando o menu principal primeiro
         document.addEventListener('DOMContentLoaded', () => {
             initializeZobristTable(); // Inicializa a tabela Zobrist uma vez ao carregar
-            showMainMenu(); // Sempre inicia no menu principal
+            // Oculta o menu principal e o contêiner do jogo até que a tela de carregamento desapareça
+            mainMenuElement.classList.add('hidden');
+            gameContainerElement.classList.add('hidden');
+            loadingScreenElement.classList.remove('hidden'); // Garante que a tela de carregamento esteja visível
+
+            // Precarrega a imagem de fundo e só então esconde a tela de carregamento
+            const backgroundImage = new Image();
+            backgroundImage.src = BACKGROUND_IMAGE_URL;
+            backgroundImage.onload = () => {
+                loadingScreenElement.classList.add('hidden'); // Oculta a tela de carregamento
+                showMainMenu(); // Mostra o menu principal
+            };
+            backgroundImage.onerror = () => {
+                console.error("Erro ao carregar a imagem de fundo. Prosseguindo sem ela.");
+                loadingScreenElement.classList.add('hidden'); // Oculta a tela de carregamento mesmo com erro
+                showMainMenu(); // Mostra o menu principal
+            };
         });
     </script>
 </body>
