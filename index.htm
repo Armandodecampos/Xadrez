@@ -2,77 +2,124 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-2.0.0">
     <title>Jogo de Xadrez</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #1a202c; /* Fundo escuro */
+            /* Removido background-color do body para que a imagem de fundo seja visível */
             display: flex;
+            flex-direction: column; /* Organiza os filhos verticalmente */
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            min-height: 100vh; /* Garante que o corpo ocupe toda a altura da viewport */
             margin: 0;
             color: #e2e8f0; /* Texto claro */
-            padding: 20px; /* Preenchimento ao redor de toda a área do jogo */
+            padding: 0;
             box-sizing: border-box;
-            overflow-x: hidden; /* Garante que não haja rolagem horizontal */
+            width: 100vw; /* Garante que o body ocupe 100% da largura da viewport */
+            overflow: hidden; /* Evita barras de rolagem indesejadas */
+            background-color: #1a202c; /* Fundo do contêiner do jogo */
+        }
+
+        /* Estilo para o fundo da tela inicial */
+        #mainMenuBackground {
+            background-color: #1a202c; /* Cor de fallback caso a imagem não carregue */
+            background-size: cover; /* Cobre todo o elemento */
+            background-position: center; /* Centraliza a imagem */
+            background-repeat: no-repeat; /* Não repete a imagem */
+            background-attachment: fixed; /* Mantém o fundo fixo ao rolar (se houver rolagem) */
+            z-index: 0; /* Garante que esteja atrás do conteúdo */
         }
 
         .game-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            background-color: #2d3748; /* Fundo escuro ligeiramente mais claro para o contêiner */
-            padding: 20px; /* Preenchimento dentro do contêiner do jogo, ao redor do tabuleiro e botões */
+            padding: 0.5vmin; /* Preenchimento interno responsivo para o contêiner (reduzido) */
             border-radius: 15px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
-            border: 4px solid #4a5568; /* Borda movida para cá */
-            box-sizing: border-box; /* Inclui preenchimento e borda no cálculo da largura */
-            /* Define uma largura máxima para o contêiner do jogo em telas maiores */
-            /* Isso deve acomodar o tamanho máximo do tabuleiro (480px) + seu próprio preenchimento (2*20px) + sua própria borda (2*4px) */
-            max-width: 528px; /* 480px (tamanho máximo do tabuleiro) + 2*20px (preenchimento do contêiner) + 2*4px (borda do contêiner) = 528px */
-            width: 100%; /* Ocupa toda a largura disponível até a largura máxima */
-            position: relative; /* Necessário para o posicionamento absoluto do modal de promoção */
+            /* Usando vmin para garantir que o contêiner se ajuste à menor dimensão da viewport */
+            width: 99vmin; /* Ligeiramente aumentado */
+            height: 99vmin; /* Ligeiramente aumentado */
+            max-width: 100vw; /* Garante que não exceda a largura da viewport */
+            max-height: 100vh; /* Garante que não exceda a altura da viewport */
+            position: relative; /* Necessário para posicionamento absoluto do modal de promoção */
+            box-sizing: border-box; /* Inclui padding na largura/altura */
+            gap: 0.5vmin; /* Espaçamento entre os itens flexíveis (status, tabuleiro e botões) (reduzido) */
+            overflow: hidden; /* Importante para cortar conteúdo que exceda, evitando barras de rolagem no contêiner */
+            justify-content: space-between; /* Distribui o espaço verticalmente */
+            align-self: center; /* Centraliza o game-container se o body for maior */
+            z-index: 1; /* Garante que esteja acima do fundo da tela inicial */
         }
 
         .chessboard {
-            /* O tabuleiro agora ocupará 100% da largura disponível dentro do preenchimento do seu pai */
-            width: 100%;
-            /* Deixa o JavaScript ajustar a altura para manter o aspecto quadrado */
-            height: auto;
             display: grid;
-            grid-template-columns: repeat(8, 1fr); /* Cada coluna ocupa uma fração igual do espaço disponível */
-            grid-template-rows: repeat(8, 1fr); /* Cada linha ocupa uma fração igual */
-            /* Borda e raio da borda removidos daqui */
-            overflow: hidden;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(8, 1fr); /* Colunas responsivas */
+            grid-template-rows: repeat(8, 1fr); /* Linhas responsivas */
+            border: 4px solid #4a5568;
+            border-radius: 8px;
+            overflow: hidden; /* Garante que os cantos arredondados se apliquem às casas */
             box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
+            /* Removido transition: transform, pois a animação @keyframes irá controlá-lo */
+            aspect-ratio: 1 / 1; /* CRUCIAL: Garante que o tabuleiro seja um quadrado */
+            flex-grow: 1; /* Permite que o tabuleiro cresça para preencher o espaço disponível */
+            flex-shrink: 1; /* Permite que o tabuleiro encolha se necessário */
+            flex-basis: 0; /* Permite que o item flexível defina sua base como 0 e cresça */
+            min-width: 0; /* Necessário para itens flexíveis */
+            min-height: 0; /* Impede que o item flexível transborde seu contêiner */
+            transform-origin: center center; /* Garante que a rotação e o dimensionamento sejam do centro */
+            /* A transformação inicial será definida pelo JavaScript */
+        }
+
+        /* Animação para rotação e encolhimento (0 a 180 graus) */
+        @keyframes rotate-and-shrink-forward {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(90deg) scale(0.7); } /* Encolhe no meio da rotação */
+            100% { transform: rotate(180deg) scale(1); } /* Volta ao tamanho normal no final da rotação */
+        }
+
+        /* Animação para rotação e encolhimento (180 a 0 graus) */
+        @keyframes rotate-and-shrink-backward {
+            0% { transform: rotate(180deg) scale(1); } /* Começa da posição rotacionada */
+            50% { transform: rotate(270deg) scale(0.7); } /* Encolhe no meio (90 deg a mais que 180) */
+            100% { transform: rotate(360deg) scale(1); } /* Volta à posição original (0 deg) */
+        }
+
+        /* Aplica a animação quando a classe animating-forward é adicionada */
+        .chessboard.animating-forward {
+            animation: rotate-and-shrink-forward 0.8s ease-in-out forwards; /* 'forwards' mantém o estado final da animação */
+        }
+
+        /* Aplica a animação quando a classe animating-backward é adicionada */
+        .chessboard.animating-backward {
+            animation: rotate-and-shrink-backward 0.8s ease-in-out forwards; /* 'forwards' mantém o estado final da animação */
         }
 
         .square {
-            /* Estes serão definidos dinamicamente pelo JS para garantir que os quadrados sejam quadrados */
+            width: 100%; /* Casas preenchem suas células de grade */
+            aspect-ratio: 1 / 1; /* Garante que cada casa seja quadrada */
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 36px; /* Padrão, será ajustado pela media query */
+            font-size: inherit; /* Herda o tamanho da fonte da peça */
             cursor: pointer;
             user-select: none;
             transition: background-color 0.2s ease;
         }
 
         .light {
-            background-color: #f0d9b5; /* Cor clara do quadrado */
+            background-color: #f0d9b5; /* Cor da casa clara */
         }
 
         .dark {
-            background-color: #b58863; /* Cor escura do quadrado */
+            background-color: #b58863; /* Cor da casa escura */
         }
 
         .selected {
-            background-color: #6ee7b7 !important; /* Esverdeado para peça selecionada */
+            background-color: #6ee7b7 !important; /* Verde-azulado para peça selecionada */
             box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.4);
         }
 
@@ -83,9 +130,20 @@
 
         .piece {
             cursor: grab;
-            font-size: 38px; /* Ligeiramente maior para melhor visibilidade */
+            /* Esta linha garante que o tamanho da peça seja responsivo */
+            font-size: min(6vw, 50px); /* Tamanho responsivo da peça, ajustado para preencher melhor */
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
             transition: transform 0.1s ease-out;
+        }
+
+        /* Contra-rotaciona as peças quando o tabuleiro é rotacionado para 180deg */
+        .chessboard.animating-forward .piece {
+            transform: rotate(180deg);
+        }
+
+        /* Contra-rotaciona as peças quando o tabuleiro está em 180deg e volta para 0deg */
+        .chessboard.animating-backward .piece {
+            transform: rotate(0deg); /* Volta as peças para a orientação normal */
         }
 
         .piece:active {
@@ -102,27 +160,28 @@
         }
 
         .status-message {
-            font-size: 1.5rem;
+            font-size: min(4vmin, 1.5rem); /* Tamanho da fonte responsivo para mensagem de status */
             font-weight: bold;
-            margin-bottom: 15px;
             text-align: center;
-            color: #a0aec0; /* Cinza mais claro para o status */
+            color: #a0aec0; /* Cinza mais claro para status */
+            flex-shrink: 0; /* Impede que a mensagem de status encolha */
         }
 
         .control-buttons {
             display: flex;
-            gap: 15px;
-            margin-top: 20px;
+            gap: 1vmin; /* Espaçamento responsivo entre os botões */
             flex-wrap: wrap; /* Permite que os botões quebrem em telas menores */
-            justify-content: center; /* Centraliza os botões quando quebrados */
+            justify-content: center;
+            flex-shrink: 0; /* Impede que os botões encolham */
+            margin-top: 3.5vmin; /* Margem responsiva */
         }
 
         .game-button {
             background-color: #4299e1; /* Botão azul */
             color: white;
-            padding: 12px 25px;
+            padding: min(1.5vmin, 12px) min(3vmin, 25px); /* Preenchimento responsivo */
             border-radius: 10px;
-            font-size: 1.1rem;
+            font-size: min(2.5vmin, 1.1rem); /* Tamanho da fonte responsivo */
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.2s ease;
             box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
@@ -149,27 +208,27 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            background-color: #2d3748;
-            padding: 40px;
+            padding: min(6vmin, 40px); /* Preenchimento responsivo */
             border-radius: 15px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
             max-width: 500px;
             width: 100%;
             text-align: center;
+            background-color: rgba(26, 32, 44, 0.8); /* Fundo semi-transparente para o menu */
+            z-index: 1; /* Garante que esteja acima do fundo */
         }
 
         .menu-button {
             background-color: #48bb78; /* Botão verde */
             color: white;
-            padding: 15px 30px;
+            padding: min(2.5vmin, 15px) min(5vmin, 30px); /* Preenchimento responsivo */
             border-radius: 10px;
-            font-size: 1.3rem;
+            font-size: min(3.5vmin, 1.3rem); /* Tamanho da fonte responsivo */
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.2s ease;
             box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
             border: none;
             width: 80%;
-            margin-bottom: 20px;
+            margin-bottom: 1.5vmin; /* Margem responsiva */
         }
 
         .menu-button:hover {
@@ -179,7 +238,7 @@
 
         .menu-button:active {
             transform: translateY(0);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 2px 5px (0, 0, 0, 0.3);
         }
 
         /* O seletor de dificuldade agora está oculto */
@@ -194,7 +253,7 @@
             left: 50%;
             transform: translate(-50%, -50%);
             background-color: #2d3748;
-            padding: 25px;
+            padding: min(4vmin, 25px); /* Preenchimento responsivo */
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
             z-index: 1000;
@@ -206,7 +265,7 @@
         }
 
         .promotion-modal h3 {
-            font-size: 1.8rem;
+            font-size: min(4vmin, 1.8rem); /* Tamanho da fonte responsivo */
             font-weight: bold;
             color: #e2e8f0;
             margin-bottom: 10px;
@@ -215,20 +274,22 @@
         .promotion-options {
             display: flex;
             gap: 15px;
+            flex-wrap: wrap; /* Permite que as opções quebrem */
+            justify-content: center;
         }
 
         .promotion-button {
             background-color: #48bb78; /* Botão verde */
             color: white;
-            padding: 15px;
+            padding: min(2.5vmin, 15px); /* Preenchimento responsivo */
             border-radius: 10px;
-            font-size: 2.5rem; /* Tamanho grande do ícone */
+            font-size: min(5vmin, 2.5rem); /* Tamanho da fonte responsivo */
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.2s ease;
             box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
             border: none;
-            width: 70px; /* Largura fixa para tamanho de botão consistente */
-            height: 70px; /* Altura fixa */
+            width: min(10vmin, 70px); /* Largura responsiva */
+            height: min(10vmin, 70px); /* Altura responsiva */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -244,39 +305,8 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
         }
 
-        /* Ajustes responsivos para o modal de promoção e layout geral */
+        /* Ajustes responsivos para o modal de promoção (media query original, ainda útil) */
         @media (max-width: 600px) {
-            body {
-                padding: 10px; /* Reduz o preenchimento do corpo em telas pequenas */
-            }
-            .game-container {
-                padding: 10px; /* Reduz o preenchimento do contêiner em telas pequenas */
-                border-radius: 10px; /* Raio da borda ligeiramente menor */
-                max-width: 100%; /* Garante que ele possa encolher completamente */
-                width: calc(100% - 20px); /* Considera o novo preenchimento do corpo */
-            }
-            .chessboard {
-                width: 100%; /* Mantém 100% */
-                height: auto; /* Deixa o JS lidar com a altura para mantê-lo quadrado */
-            }
-            .square {
-                font-size: 28px; /* Tamanho menor da peça no celular */
-            }
-            .piece {
-                font-size: 30px; /* Tamanho menor da peça no celular */
-            }
-            .status-message {
-                font-size: 1.2rem; /* Mensagem de status menor no celular */
-            }
-            .control-buttons {
-                gap: 10px; /* Reduz a lacuna entre os botões */
-            }
-            .game-button, .menu-button {
-                padding: 10px 20px;
-                font-size: 1rem;
-                width: auto; /* Permite que os botões se ajustem naturalmente */
-                flex-grow: 1; /* Permite que cresçam se o espaço permitir */
-            }
             .promotion-modal {
                 padding: 15px;
                 width: 90%;
@@ -297,20 +327,19 @@
         }
     </style>
 </head>
-<body class="bg-gray-900 flex flex-col items-center justify-center min-h-screen p-5">
+<body class="flex flex-col items-center justify-center min-h-screen">
+    <!-- Background para a tela inicial -->
+    <div id="mainMenuBackground" class="absolute inset-0 bg-cover bg-center bg-no-repeat hidden" style="background-image: url('https://dl.dropbox.com/scl/fi/3uw0rjjq8myl63qfpifkn/Xadrez.png?rlkey=elzhai342zvi7i2dh9udvcbwi&st=5ir07uua&dl=0');"></div>
+
     <!-- Seção do Menu Principal -->
-    <div id="mainMenu" class="main-menu">
+    <div id="mainMenu" class="main-menu z-10">
         <h1 class="text-4xl font-bold mb-8 text-white">Jogo de Xadrez</h1>
-        <!-- A dificuldade agora é fixa em "Normal (Recomendado)" e a seleção foi removida do UI -->
-        <!-- O valor de aiSearchDepth será definido diretamente no JavaScript para 2 -->
         <button id="playVsComputerBtn" class="menu-button">Um Jogador</button>
         <button id="playVsPlayerBtn" class="menu-button">Dois Jogadores</button>
-        <!-- O botão "Limpar Partida Salva" foi removido -->
     </div>
 
     <!-- Seção do Contêiner do Jogo (inicialmente oculta) -->
-    <div id="gameContainer" class="game-container hidden">
-        <!-- Removido o título "Jogo de Xadrez" da tela de jogo -->
+    <div id="gameContainer" class="game-container hidden z-10">
         <div id="status" class="status-message">Vez das Brancas</div>
         <div id="chessboard" class="chessboard"></div>
         <div class="control-buttons">
@@ -381,6 +410,7 @@
         const playVsPlayerBtn = document.getElementById('playVsPlayerBtn');
         const promotionModal = document.getElementById('promotionModal');
         const promotionOptions = document.getElementById('promotionOptions');
+        const mainMenuBackgroundElement = document.getElementById('mainMenuBackground');
 
         // Valores das peças para a função de avaliação (Sinais corrigidos para a perspectiva da IA - Preto é o jogador maximizador)
         const PIECE_VALUES = {
@@ -389,7 +419,7 @@
             'B': -70000,  // Bispo Branco: -3.5 pontos
             'R': -120000, // Torre Branca: -6 pontos
             'Q': -220000, // Rainha Branca: -11 pontos
-            'K': -1000000000, // Rei Branco: Inestimável (grande negativo para evitar a captura do rei)
+            'K': -1000000000, // Rei Branco: Inestimável (grande negativo para evitar captura do rei)
 
             'p': 20000,   // Peão Preto: +1 ponto (positivo porque é bom para o preto)
             'n': 70000,   // Cavalo Preto: +3.5 pontos
@@ -399,7 +429,7 @@
             'k': 1000000000 // Rei Preto: Inestimável
         };
 
-        // Tabelas de posição das peças (exemplo, pode ser refinado)
+        // Tabelas de posição das peças (exemplo, podem ser refinadas)
         // Os valores são adicionados ao valor base da peça. Positivo para branco, negativo para preto.
         const PAWN_POSITION_TABLE = [
             [0, 0, 0, 0, 0, 0, 0, 0],
@@ -493,11 +523,11 @@
         }
 
         /**
-         * Inicializa a tabela Zobrist com números aleatórios para cada peça em cada quadrado.
+         * Inicializa a tabela Zobrist com números aleatórios para cada peça em cada casa.
          * Também inicializa números aleatórios para direitos de roque, arquivo en passant e turno.
          */
         function initializeZobristTable() {
-            // Peças nos quadrados
+            // Peças nas casas
             for (const pieceType in PIECES) {
                 ZOBRIST_TABLE[pieceType] = [];
                 for (let r = 0; r < 8; r++) {
@@ -521,14 +551,14 @@
                 'white': getRandom32BitInt(),
                 'black': getRandom32BitInt()
             };
-            // Nota: En passant não está totalmente implementado em Zobrist para simplificar nesta versão.
+            // Nota: En passant não está totalmente implementado em Zobrist para simplificação nesta versão.
         }
 
         /**
-         * Calcula o hash Zobrist para um determinado estado do tabuleiro.
+         * Calcula o hash Zobrist para um dado estado do tabuleiro.
          * Esta função deve ser usada no início do minimax para fazer o hash do estado atual do tabuleiro.
          * @param {Array<Array<string>>} boardState - O estado do tabuleiro para fazer o hash.
-         * @param {string} playerTurn - O turno do jogador ('white' ou 'black').
+         * @param {string} playerTurn - O jogador cujo turno é ('white' ou 'black').
          * @param {object} castlingFlags - Objeto com as flags de roque atuais (whiteKingMoved, etc.).
          * @returns {number} O hash Zobrist para o estado do tabuleiro dado.
          */
@@ -563,6 +593,7 @@
         function showMainMenu() {
             mainMenuElement.classList.remove('hidden');
             gameContainerElement.classList.add('hidden');
+            mainMenuBackgroundElement.classList.remove('hidden'); // Mostra o fundo da tela inicial
         }
 
         /**
@@ -571,7 +602,7 @@
         function showGame() {
             mainMenuElement.classList.add('hidden');
             gameContainerElement.classList.remove('hidden');
-            adjustChessboardSquareSize(); // Chama quando o contêiner do jogo é mostrado
+            mainMenuBackgroundElement.classList.add('hidden'); // Oculta o fundo da tela inicial
         }
 
         /**
@@ -636,7 +667,11 @@
                     updateHistoryButtons();
                     console.log(`Estado do jogo para ${modeToLoad} carregado do localStorage.`);
 
-                    // Se for o turno da IA após o carregamento, faz o movimento da IA
+                    // Aplica a rotação do tabuleiro com base no jogador carregado (com ou sem animação, dependendo do contexto)
+                    applyBoardRotation(currentPlayer);
+
+
+                    // Se for a vez da IA após o carregamento, a IA faz a jogada
                     if (!gameOver && gameMode === 'computer' && currentPlayer === 'black') {
                         isThinking = true;
                         statusElement.textContent = "Computador pensando...";
@@ -646,7 +681,7 @@
                     return true; // Jogo carregado com sucesso
                 }
             } catch (e) {
-                console.error('Erro ao carregar o jogo do localStorage:', e);
+                console.error('Erro ao carregar o jogo no localStorage:', e);
                 localStorage.removeItem(`chessGame_${modeToLoad}`); // Limpa dados corrompidos para aquele modo
             }
             return false; // Nenhum jogo carregado
@@ -658,13 +693,13 @@
          * @param {string} mode - 'computer' ou 'player'
          */
         function initializeNewGame(mode) {
-            board = JSON.parse(JSON.stringify(initialBoard)); // Cópia profunda do tabuleiro inicial
+            board = JSON.parse(JSON.stringify(initialBoard)); // Copia profundamente o tabuleiro inicial
             selectedPiece = null;
             currentPlayer = 'white';
             gameOver = false;
             gameMode = mode; // Define o modo de jogo
             isThinking = false; // Reseta a flag de pensamento
-            aiSearchDepth = 2; // Profundidade de busca da IA fixa para Normal (2)
+            aiSearchDepth = 2; // Profundidade de busca da IA fixada para Normal (2)
 
             // Reseta as flags de roque
             whiteKingMoved = false;
@@ -678,8 +713,8 @@
             historyPointer = -1; // Reseta o ponteiro
             transpositionTable.clear(); // Limpa a tabela de transposição para um novo jogo
 
-            // A tabela Zobrist é inicializada uma vez no DOMContentLoaded, não é necessário reinicializar aqui
-            // Recalcula o hash inicial com base no estado inicial do tabuleiro e nas flags
+            // A tabela Zobrist é inicializada uma vez em DOMContentLoaded, não há necessidade de reinicializar aqui
+            // Recalcula o hash inicial com base no estado do tabuleiro inicial e nas flags
             currentZobristHash = calculateBoardHash(board, currentPlayer, {
                 whiteKingMoved, blackKingMoved, whiteRookLeftMoved, whiteRookRightMoved, blackRookLeftMoved, blackRookRightMoved
             });
@@ -689,36 +724,41 @@
             updateStatus();
             updateHistoryButtons();
 
-            // Se estiver começando contra o computador, e for o turno do preto (turno da IA), faz o movimento da IA
+            // Garante que o tabuleiro não esteja rotacionado no início de um novo jogo
+            chessboardElement.classList.remove('animating-forward', 'animating-backward');
+            chessboardElement.style.transform = 'rotate(0deg)'; // Sempre começa em 0deg
+            void chessboardElement.offsetWidth; // Força reflow para garantir que o reset da transformação seja aplicado imediatamente
+
+            // Se iniciar contra o computador, e for a vez das pretas (vez da IA), a IA faz a jogada
             if (gameMode === 'computer' && currentPlayer === 'black') {
                 setTimeout(makeComputerMove, 500); // Pequeno atraso para melhor UX
             }
         }
 
         /**
-         * Inicia um jogo em um modo específico. Tenta carregar um jogo salvo para aquele modo primeiro.
-         * Se nenhum jogo salvo existir, inicializa um novo.
+         * Inicia um jogo em um modo específico. Ele tenta carregar um jogo salvo para aquele modo primeiro.
+         * Se nenhum jogo salvo existir, ele inicializa um novo.
          * @param {string} mode - 'computer' ou 'player'
          */
         function startGameMode(mode) {
             if (!loadGameFromLocalStorage(mode)) { // Tenta carregar
                 initializeNewGame(mode); // Se nenhum jogo salvo, inicia um novo
             }
-            showGame(); // Sempre mostra o tabuleiro após tentar carregar/inicializar
+            showGame(); // Sempre mostra o tabuleiro do jogo após tentar carregar/inicializar
         }
 
 
         /**
          * Salva o estado atual do jogo no histórico.
-         * Se novos movimentos forem feitos após desfazer, isso trunca o histórico "futuro".
+         * Se novas jogadas forem feitas após desfazer, isso trunca o histórico "futuro".
          */
         function saveCurrentState() {
-            // Se desfizemos movimentos, trunca o histórico para o ponteiro atual
+            // Se desfizermos jogadas, truncamos o histórico para o ponteiro atual
             if (historyPointer < gameHistory.length - 1) {
                 gameHistory = gameHistory.slice(0, historyPointer + 1);
             }
             gameHistory.push({
-                board: JSON.parse(JSON.stringify(board)), // Cópia profunda do tabuleiro
+                board: JSON.parse(JSON.stringify(board)), // Copia profundamente o tabuleiro
                 currentPlayer: currentPlayer,
                 gameOver: gameOver,
                 whiteKingMoved: whiteKingMoved,
@@ -757,11 +797,14 @@
                 updateStatus();
                 updateHistoryButtons();
                 saveGameToLocalStorage(); // Salva no localStorage após carregar um estado histórico
+
+                // Aplica a rotação do tabuleiro com base no jogador carregado (com animação)
+                applyBoardRotation(currentPlayer);
             }
         }
 
         /**
-         * Desfaz o último movimento.
+         * Desfaz a última jogada.
          */
         function undoMove() {
             if (historyPointer > 0) {
@@ -771,7 +814,7 @@
         }
 
         /**
-         * Refaz um movimento previamente desfeito.
+         * Refaz uma jogada previamente desfeita.
          */
         function redoMove() {
             if (historyPointer < gameHistory.length - 1) {
@@ -795,21 +838,7 @@
         }
 
         /**
-         * Ajusta o tamanho dos quadrados do tabuleiro para manter uma proporção quadrada.
-         */
-        function adjustChessboardSquareSize() {
-            const chessboardWidth = chessboardElement.offsetWidth;
-            const squareSize = chessboardWidth / 8; // Calcula o tamanho com base na largura atual do tabuleiro
-
-            // Aplica o tamanho calculado a cada quadrado
-            document.querySelectorAll('.square').forEach(square => {
-                square.style.width = `${squareSize}px`;
-                square.style.height = `${squareSize}px`;
-            });
-        }
-
-        /**
-         * Renderiza o tabuleiro com base no estado 'board' atual.
+         * Renderiza o tabuleiro de xadrez com base no estado 'board' atual.
          */
         function renderBoard() {
             chessboardElement.innerHTML = ''; // Limpa o tabuleiro existente
@@ -832,11 +861,10 @@
                     chessboardElement.appendChild(square);
                 }
             }
-            adjustChessboardSquareSize(); // Chama após a renderização
         }
 
         /**
-         * Lida com um evento de clique em um quadrado do tabuleiro.
+         * Lida com um evento de clique em uma casa do tabuleiro de xadrez.
          * @param {Event} event - O evento de clique.
          */
         function handleSquareClick(event) {
@@ -853,34 +881,34 @@
                 const [prevRow, prevCol] = selectedPiece;
                 const prevPiece = board[prevRow][prevCol];
 
-                // Se clicar na mesma peça selecionada, deseleciona-a
+                // Se clicar na mesma peça selecionada, desseleciona-a
                 if (row === prevRow && col === prevCol) {
                     deselectPiece();
                     return;
                 }
 
-                // Verifica a tentativa de roque (Rei selecionado, alvo é um quadrado de destino de roque)
+                // Verifica tentativa de roque (Rei selecionado, alvo é uma casa de destino de roque)
                 if (prevPiece.toLowerCase() === 'k') {
                     let rookCol = -1; // Inicializa com uma coluna inválida
 
-                    // Roque do lado do rei (Rei se move para g1/g8)
+                    // Roque do lado do rei (Rei move para g1/g8)
                     if ((isWhitePiece(prevPiece) && prevRow === 7 && prevCol === 4 && row === 7 && col === 6) ||
                         (isBlackPiece(prevPiece) && prevRow === 0 && prevCol === 4 && row === 0 && col === 6)) {
                         rookCol = 7; // Coluna da torre do lado do rei
                     }
-                    // Roque do lado da rainha (Rei se move para c1/c8)
+                    // Roque do lado da rainha (Rei move para c1/c8)
                     else if ((isWhitePiece(prevPiece) && prevRow === 7 && prevCol === 4 && row === 7 && col === 2) ||
                              (isBlackPiece(prevPiece) && prevRow === 0 && prevCol === 4 && row === 0 && col === 2)) {
                         rookCol = 0; // Coluna da torre do lado da rainha
                     }
 
-                    if (rookCol !== -1) { // Se for um quadrado de destino de roque
+                    if (rookCol !== -1) { // Se for uma casa de destino de roque
                         if (isValidCastling(prevRow, prevCol, row, rookCol)) { // Passa a linha de destino do rei e a coluna original da torre
                             makeCastlingMove(prevRow, prevCol, row, rookCol);
                             deselectPiece();
                             switchPlayer();
                             saveCurrentState();
-                            return; // Movimento de roque foi feito, sai do manipulador
+                            return; // A jogada de roque foi feita, sai do manipulador
                         }
                     }
                 }
@@ -888,9 +916,9 @@
                 // Tenta mover a peça selecionada (movimento regular)
                 if (isValidMove(prevPiece, prevRow, prevCol, row, col)) {
                     makeMove(prevRow, prevCol, row, col);
-                    // Verifica a promoção de peão após fazer o movimento
+                    // Verifica promoção de peão após fazer a jogada
                     if (prevPiece.toLowerCase() === 'p' && ((isWhitePiece(prevPiece) && row === 0) || (isBlackPiece(prevPiece) && row === 7))) {
-                        promotionTarget = [row, col]; // Armazena o quadrado de destino para promoção
+                        promotionTarget = [row, col]; // Armazena a casa de destino para promoção
                         showPromotionModal(isWhitePiece(prevPiece));
                     } else {
                         deselectPiece();
@@ -921,7 +949,7 @@
          */
         function showPromotionModal(isWhitePawn) {
             promotionModal.classList.remove('hidden');
-            promotionOptions.innerHTML = ''; // Limpa as opções anteriores
+            promotionOptions.innerHTML = ''; // Limpa opções anteriores
 
             const piecesToPromoteTo = ['Q', 'R', 'B', 'N']; // Rainha, Torre, Bispo, Cavalo
             const pieceColors = isWhitePawn ? piecesToPromoteTo : piecesToPromoteTo.map(p => p.toLowerCase());
@@ -945,7 +973,7 @@
          * @param {string} chosenPiece - O caractere da peça escolhida (ex: 'Q', 'r').
          */
         function handlePawnPromotion(chosenPiece) {
-            if (!promotionTarget) return; // Não deve acontecer
+            if (!promotionTarget) return; // Não deveria acontecer
 
             const [row, col] = promotionTarget;
             const originalPawn = board[row][col]; // Obtém o peão antes da promoção
@@ -969,7 +997,7 @@
 
         /**
          * Seleciona uma peça na linha e coluna dadas.
-         * Destaca o quadrado selecionado e os movimentos possíveis.
+         * Destaca a casa selecionada e os movimentos possíveis.
          * @param {number} row - A linha da peça.
          * @param {number} col - A coluna da peça.
          */
@@ -988,7 +1016,7 @@
 
         /**
          * Desseleciona a peça atualmente selecionada.
-         * Remove os destaques do quadrado selecionado e dos movimentos possíveis.
+         * Remove os destaques da casa selecionada e dos movimentos possíveis.
          */
         function deselectPiece() {
             if (selectedPiece) {
@@ -1003,7 +1031,7 @@
         /**
          * Verifica se uma peça pertence ao jogador atual.
          * @param {string} piece - O caractere da peça.
-         * @returns {boolean} - True se a peça pertencer ao jogador atual.
+         * @returns {boolean} - True se a peça pertence ao jogador atual.
          */
         function isCurrentPlayerPiece(piece) {
             return (currentPlayer === 'white' && isWhitePiece(piece)) ||
@@ -1013,7 +1041,7 @@
         /**
          * Verifica se uma peça é branca.
          * @param {string} piece - O caractere da peça.
-         * @returns {boolean} - True se a peça for branca.
+         * @returns {boolean} - True se a peça é branca.
          */
         function isWhitePiece(piece) {
             return piece === piece.toUpperCase();
@@ -1022,7 +1050,7 @@
         /**
          * Verifica se uma peça é preta.
          * @param {string} piece - O caractere da peça.
-         * @returns {boolean} - True se a peça for preta.
+         * @returns {boolean} - True se a peça é preta.
          */
         function isBlackPiece(piece) {
             return piece === piece.toLowerCase();
@@ -1030,8 +1058,8 @@
 
         /**
          * Faz um movimento no tabuleiro.
-         * @param {number} fromRow - Linha inicial.
-         * @param {number} fromCol - Coluna inicial.
+         * @param {number} fromRow - Linha de partida.
+         * @param {number} fromCol - Coluna de partida.
          * @param {number} toRow - Linha de destino.
          * @param {number} toCol - Coluna de destino.
          * @param {string} [promotedToPiece] - Opcional: A peça para promover (ex: 'Q', 'n').
@@ -1057,7 +1085,7 @@
             board[toRow][toCol] = movedPiece; // Move a peça
             board[fromRow][fromCol] = ''; // Limpa a posição original
 
-            // Verificação de Promoção de Peão
+            // Verifica Promoção de Peão
             if (movedPiece.toLowerCase() === 'p' && ((isWhitePiece(movedPiece) && toRow === 0) || (isBlackPiece(movedPiece) && toRow === 7))) {
                 const finalPromotedPiece = promotedToPiece || (isWhitePiece(movedPiece) ? 'Q' : 'q'); // Padrão para Rainha se não especificado pela IA ou humano
                 currentZobristHash ^= ZOBRIST_TABLE[movedPiece][toRow][toCol]; // XOR do peão que acabou de se mover
@@ -1067,21 +1095,21 @@
                 currentZobristHash ^= ZOBRIST_TABLE[movedPiece][toRow][toCol]; // XOR da peça movida (se não houver promoção)
             }
 
-            // XOR do turno antigo e XOR do novo turno (apenas se não estiver esperando a promoção humana)
+            // XOR do turno antigo e XOR do novo turno (apenas se não estiver esperando promoção humana)
             if (! (movedPiece.toLowerCase() === 'p' && ((isWhitePiece(movedPiece) && toRow === 0) || (isBlackPiece(movedPiece) && toRow === 7)) && !isThinking) ) {
                 currentZobristHash ^= ZOBRIST_TABLE.turn[currentPlayer];
                 const newPlayer = currentPlayer === 'white' ? 'black' : 'white';
                 currentZobristHash ^= ZOBRIST_TABLE.turn[newPlayer];
             }
 
-            renderBoard(); // Renderiza o tabuleiro novamente
+            renderBoard(); // Renderiza novamente o tabuleiro
         }
 
         /**
          * Executa um movimento de roque.
          * @param {number} kingStartRow - Linha da posição inicial do Rei.
          * @param {number} kingStartCol - Coluna da posição inicial do Rei.
-         * @param {number} kingEndRow - Linha da posição final do Rei (quadrado de roque).
+         * @param {number} kingEndRow - Linha da posição final do Rei (casa de roque).
          * @param {number} rookOriginalCol - Coluna original da Torre envolvida no roque.
          */
         function makeCastlingMove(kingStartRow, kingStartCol, kingEndRow, rookOriginalCol) {
@@ -1124,7 +1152,7 @@
             currentZobristHash ^= ZOBRIST_TABLE.turn[currentPlayer];
             const newPlayer = currentPlayer === 'white' ? 'black' : 'white';
             currentZobristHash ^= ZOBRIST_TABLE.turn[newPlayer];
-            // 4. Também XOR de/para mudanças nos direitos de roque (simplificado por enquanto, mas um Zobrist completo faria isso)
+            // 4. Também XOR de/para as mudanças nos direitos de roque (simplificado por enquanto, mas um Zobrist completo faria isso)
 
 
             // Move o Rei
@@ -1139,14 +1167,48 @@
             renderBoard();
         }
 
+        /**
+         * Aplica a rotação do tabuleiro com base no jogador atual e no modo de jogo.
+         * Gerencia as classes de animação para transições suaves.
+         * @param {string} playerToRotateTo - O jogador para o qual o tabuleiro deve ser orientado ('white' ou 'black').
+         */
+        function applyBoardRotation(playerToRotateTo) {
+            // Remove ambas as classes de animação para garantir que a animação possa ser re-acionada
+            chessboardElement.classList.remove('animating-forward', 'animating-backward');
+
+            if (gameMode === 'player') {
+                // Determina a rotação inicial para a próxima animação
+                // Se estamos girando PARA o preto (180deg), começamos de 0deg.
+                // Se estamos girando PARA o branco (0deg), começamos de 180deg.
+                const startRotationForAnimation = (playerToRotateTo === 'black') ? 'rotate(0deg)' : 'rotate(180deg)';
+
+                // Define a transformação para o ponto de partida da animação
+                chessboardElement.style.transform = startRotationForAnimation;
+
+                // Força um reflow para fazer o navegador registrar a mudança em 'transform'
+                void chessboardElement.offsetWidth;
+
+                // Aplica a classe de animação apropriada
+                if (playerToRotateTo === 'black') {
+                    chessboardElement.classList.add('animating-forward');
+                } else {
+                    chessboardElement.classList.add('animating-backward');
+                }
+            } else {
+                // No modo computador, sempre garante rotação de 0deg sem animação
+                chessboardElement.style.transform = 'rotate(0deg)';
+            }
+        }
 
         /**
          * Troca o jogador atual.
          */
         function switchPlayer() {
             currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
+            applyBoardRotation(currentPlayer); // Aplica a rotação do tabuleiro
             updateStatus();
-            // Verifica xeque-mate/afogamento aqui
+
+            // Verifica xeque-mate/empate por afogamento aqui
             if (isCheckmate(currentPlayer)) {
                 gameOver = true;
                 statusElement.textContent = `Xeque-mate! ${currentPlayer === 'white' ? 'Pretas' : 'Brancas'} Venceram!`;
@@ -1155,15 +1217,15 @@
                 statusElement.textContent = `Empate por Afogamento!`;
             }
 
-            // Se o jogo não acabou e for o turno da IA, faz o movimento da IA
+            // Se o jogo não acabou e for a vez da IA, a IA faz a jogada
             if (!gameOver && gameMode === 'computer' && currentPlayer === 'black') {
                 isThinking = true;
                 statusElement.textContent = "Computador pensando...";
-                updateHistoryButtons(); // Desabilita os botões enquanto a IA pensa
+                updateHistoryButtons(); // Desabilita botões enquanto a IA pensa
                 setTimeout(makeComputerMove, 500); // Pequeno atraso para melhor UX
             } else {
                 isThinking = false;
-                updateHistoryButtons(); // Reabilita os botões
+                updateHistoryButtons(); // Reabilita botões
             }
         }
 
@@ -1174,8 +1236,8 @@
             if (!gameOver) {
                 statusElement.textContent = `Vez das ${currentPlayer === 'white' ? 'Brancas' : 'Pretas'}`;
             } else {
-                // Se o jogo acabou, a mensagem de status já está definida por xeque-mate/afogamento
-                // Não é necessário alterá-la aqui, a menos que estejamos visualizando um estado anterior.
+                // Se o jogo acabou, a mensagem de status já está definida por xeque-mate/empate
+                // Não há necessidade de alterá-la aqui, a menos que estejamos visualizando o estado anterior.
                 if (historyPointer < gameHistory.length - 1) {
                      statusElement.textContent = `Vez das ${gameHistory[historyPointer].currentPlayer === 'white' ? 'Brancas' : 'Pretas'}`;
                 }
@@ -1183,14 +1245,14 @@
         }
 
         /**
-         * Verifica se um movimento é válido e legal para uma determinada peça.
+         * Verifica se um movimento é válido e legal para uma dada peça.
          * Esta função também verifica se o movimento coloca ou deixa o rei do jogador atual em xeque.
          * @param {string} piece - O caractere da peça.
-         * @param {number} fromRow - Linha inicial.
-         * @param {number} fromCol - Coluna inicial.
+         * @param {number} fromRow - Linha de partida.
+         * @param {number} fromCol - Coluna de partida.
          * @param {number} toRow - Linha de destino.
          * @param {number} toCol - Coluna de destino.
-         * @param {Array<Array<string>>} currentBoard - O estado do tabuleiro a ser verificado.
+         * @param {Array<Array<string>>} currentBoard - O estado do tabuleiro para verificar.
          * @returns {boolean} - True se o movimento for válido e legal.
          */
         function isValidMove(piece, fromRow, fromCol, toRow, toCol, currentBoard = board) {
@@ -1247,13 +1309,13 @@
         }
 
         /**
-         * Retorna um array de movimentos pseudo-legais para uma determinada peça em uma posição específica.
-         * Movimentos pseudo-legais são baseados no padrão de movimento e regras de captura da peça,
-         * mas NÃO consideram se o movimento coloca ou deixa o rei do jogador atual em xeque.
+         * Retorna um array de movimentos pseudo-legais para uma dada peça em uma posição específica.
+         * Movimentos pseudo-legais são baseados no padrão de movimento da peça e nas regras de captura,
+         * mas NÃO consideram se o movimento coloca ou deixa o rei do próprio jogador em xeque.
          * @param {string} piece - O caractere da peça.
          * @param {number} row - A linha atual da peça.
          * @param {number} col - A coluna atual da peça.
-         * @param {Array<Array<string>>} currentBoard - O estado do tabuleiro a ser verificado.
+         * @param {Array<Array<string>>} currentBoard - O estado do tabuleiro para verificar.
          * @returns {Array<Array<number>>} - Um array de pares [linha, coluna] representando movimentos pseudo-legais.
          */
         function getPossibleMoves(piece, row, col, currentBoard = board) {
@@ -1264,7 +1326,7 @@
             const addMove = (r, c) => {
                 if (r >= 0 && r < 8 && c >= 0 && c < 8) {
                     const targetPiece = currentBoard[r][c];
-                    // Se o quadrado de destino estiver vazio ou contiver uma peça do oponente
+                    // Se a casa de destino estiver vazia ou contiver uma peça do oponente
                     if (!targetPiece || (isWhite && isBlackPiece(targetPiece)) || (!isWhite && isWhitePiece(targetPiece))) {
                         moves.push([r, c]);
                     }
@@ -1292,7 +1354,7 @@
                     const direction = isWhite ? -1 : 1;
                     const startRow = isWhite ? 6 : 1;
 
-                    // Movimento único para frente
+                    // Um único movimento para frente
                     if (currentBoard[row + direction] && !currentBoard[row + direction][col]) {
                         addMove(row + direction, col);
                         // Movimento duplo inicial para frente
@@ -1302,14 +1364,14 @@
                     }
 
                     // Capturas (movimentos diagonais apenas se capturando)
-                    // Captura esquerda
+                    // Captura à esquerda
                     if (col > 0) {
                         const targetPiece = currentBoard[row + direction]?.[col - 1];
                         if (targetPiece && ((isWhite && isBlackPiece(targetPiece)) || (!isWhite && isWhitePiece(targetPiece)))) {
                             addMove(row + direction, col - 1);
                         }
                     }
-                    // Captura direita
+                    // Captura à direita
                     if (col < 7) {
                         const targetPiece = currentBoard[row + direction]?.[col + 1];
                         if (targetPiece && ((isWhite && isBlackPiece(targetPiece)) || (!isWhite && isWhitePiece(targetPiece)))) {
@@ -1345,26 +1407,26 @@
                     ];
                     kingMoves.forEach(([dr, dc]) => addMove(row + dr, col + dc));
 
-                    // Adiciona roque como movimentos pseudo-legais (quadrados de destino do rei)
+                    // Adiciona o roque como movimentos pseudo-legais (casas de destino do rei)
                     // Roque do lado do rei
                     if (isWhite) {
                         if (!whiteKingMoved && !whiteRookRightMoved &&
                             currentBoard[7][5] === '' && currentBoard[7][6] === '') {
-                            moves.push([7, 6]); // Quadrado alvo para roque do lado do rei
+                            moves.push([7, 6]); // Casa de destino para roque do lado do rei
                         }
                         // Roque do lado da rainha
                         if (!whiteKingMoved && !whiteRookLeftMoved &&
                             currentBoard[7][1] === '' && currentBoard[7][2] === '' && currentBoard[7][3] === '') {
-                            moves.push([7, 2]); // Quadrado alvo para roque do lado da rainha
+                            moves.push([7, 2]); // Casa de destino para roque do lado da rainha
                         }
                     } else { // Rei Preto
                         if (!blackKingMoved && !blackRookRightMoved &&
                             currentBoard[0][5] === '' && currentBoard[0][6] === '') {
-                            moves.push([0, 6]); // Quadrado alvo para roque do lado do rei
+                            moves.push([0, 6]); // Casa de destino para roque do lado do rei
                         }
                         if (!blackKingMoved && !blackRookLeftMoved &&
                             currentBoard[0][1] === '' && currentBoard[0][2] === '' && currentBoard[0][3] === '') {
-                            moves.push([0, 2]); // Quadrado alvo para roque do lado da rainha
+                            moves.push([0, 2]); // Casa de destino para roque do lado da rainha
                         }
                     }
                     break;
@@ -1373,12 +1435,12 @@
         }
 
         /**
-         * Retorna um array de movimentos verdadeiramente legais para uma determinada peça em uma posição específica.
-         * Movimentos legais são movimentos pseudo-legais que NÃO colocam ou deixam o rei do jogador atual em xeque.
+         * Retorna um array de movimentos verdadeiramente legais para uma dada peça em uma posição específica.
+         * Movimentos legais são movimentos pseudo-legais que NÃO colocam ou deixam o rei do próprio jogador em xeque.
          * @param {string} piece - O caractere da peça.
          * @param {number} row - A linha atual da peça.
          * @param {number} col - A coluna atual da peça.
-         * @param {Array<Array<string>>} currentBoard - O estado do tabuleiro a ser verificado.
+         * @param {Array<Array<string>>} currentBoard - O estado do tabuleiro para verificar.
          * @returns {Array<Array<number>>} - Um array de pares [linha, coluna] representando movimentos legais.
          */
         function getLegalMoves(piece, row, col, currentBoard = board) {
@@ -1387,10 +1449,10 @@
             const originalCurrentPlayer = currentPlayer; // Armazena o jogador original
 
             pseudoLegalMoves.forEach(([toR, toC]) => {
-                // Para movimentos de roque, o quadrado alvo é onde o Rei aterrissa.
-                // Precisamos verificar as condições de roque novamente aqui, especialmente os quadrados atacados.
+                // Para movimentos de roque, a casa de destino é onde o Rei aterrissa.
+                // Precisamos verificar as condições de roque novamente aqui, especialmente as casas atacadas.
                 if (piece.toLowerCase() === 'k' && (Math.abs(toC - col) === 2)) {
-                    // Este é um movimento pseudo-roque. Determina a coluna original da torre.
+                    // Este é um pseudo-movimento de roque. Determina a coluna original da torre.
                     const rookOriginalCol = (toC > col) ? 7 : 0;
                     // Passa currentBoard para isValidCastling
                     if (isValidCastling(row, col, toR, rookOriginalCol, currentBoard)) {
@@ -1408,19 +1470,19 @@
                 }
             });
 
-            currentPlayer = originalCurrentPlayer; // Reverte para o jogador original
+            currentPlayer = originalCurrentPlayer; // Reverte para o jogador atual original
             return legalMoves;
         }
 
         /**
          * Verifica se um movimento de roque é válido.
          * Esta função verifica todas as condições para o roque, incluindo histórico de movimento do rei e da torre,
-         * caminho livre e segurança do rei (não em xeque, não passando por quadrados atacados, não aterrissando em quadrado atacado).
+         * caminho livre e segurança do rei (não em xeque, não passando por casas atacadas, não aterrissando em casa atacada).
          * @param {number} kingStartRow - A linha da posição inicial do Rei.
          * @param {number} kingStartCol - A coluna da posição inicial do Rei.
-         * @param {number} kingEndRow - A linha da posição final do Rei (quadrado de roque).
+         * @param {number} kingEndRow - A linha da posição final do Rei (casa de roque).
          * @param {number} rookOriginalCol - A coluna original da Torre envolvida no roque.
-         * @param {Array<Array<string>>} currentBoard - O estado do tabuleiro a ser verificado.
+         * @param {Array<Array<string>>} currentBoard - O estado do tabuleiro para verificar.
          * @returns {boolean} - True se o movimento de roque for válido.
          */
         function isValidCastling(kingStartRow, kingStartCol, kingEndRow, rookOriginalCol, currentBoard = board) {
@@ -1461,16 +1523,16 @@
             // 5. Verifica se o Rei está atualmente em xeque
             if (isKingInCheck(isWhite ? 'white' : 'black', currentBoard)) return false;
 
-            // 6. Verifica se o Rei passa por ou aterrissa em um quadrado atacado
+            // 6. Verifica se o Rei passa por ou aterrissa em uma casa atacada
             const opponentColor = isWhite ? 'black' : 'white';
             if (rookOriginalCol === 7) { // Roque do lado do rei
-                if (isSquareAttacked(kingStartRow, kingStartCol + 1, opponentColor, currentBoard) || // Quadrado pelo qual o Rei passa
-                    isSquareAttacked(kingStartRow, kingStartCol + 2, opponentColor, currentBoard)) { // Quadrado onde o Rei aterrissa
+                if (isSquareAttacked(kingStartRow, kingStartCol + 1, opponentColor, currentBoard) || // Casa por onde o Rei passa
+                    isSquareAttacked(kingStartRow, kingStartCol + 2, opponentColor, currentBoard)) { // Casa onde o Rei aterrissa
                     return false;
                 }
             } else if (rookOriginalCol === 0) { // Roque do lado da rainha
-                if (isSquareAttacked(kingStartRow, kingStartCol - 1, opponentColor, currentBoard) || // Quadrado pelo qual o Rei passa
-                    isSquareAttacked(kingStartRow, kingStartCol - 2, opponentColor, currentBoard)) { // Quadrado onde o Rei aterrissa
+                if (isSquareAttacked(kingStartRow, kingStartCol - 1, opponentColor, currentBoard) || // Casa por onde o Rei passa
+                    isSquareAttacked(kingStartRow, kingStartCol - 2, opponentColor, currentBoard)) { // Casa onde o Rei aterrissa
                     return false;
                 }
             }
@@ -1479,9 +1541,9 @@
         }
 
         /**
-         * Encontra a posição do Rei para um determinado jogador.
+         * Encontra a posição do Rei para um dado jogador.
          * @param {string} playerColor - 'white' ou 'black'.
-         * @param {Array<Array<string>>} currentBoard - O estado do tabuleiro a ser verificado.
+         * @param {Array<Array<string>>} currentBoard - O estado do tabuleiro para verificar.
          * @returns {Array<number>|null} - [linha, coluna] do Rei, ou null se não encontrado.
          */
         function findKing(playerColor, currentBoard = board) {
@@ -1493,13 +1555,13 @@
                     }
                 }
             }
-            return null; // Não deve acontecer em um jogo válido
+            return null; // Não deveria acontecer em um jogo válido
         }
 
         /**
          * Verifica se o rei dado está atualmente em xeque.
-         * @param {string} kingColor - A cor do rei a ser verificado ('white' ou 'black').
-         * @param {Array<Array<string>>} currentBoard - O estado do tabuleiro a ser verificado.
+         * @param {string} kingColor - A cor do rei a ser verificada ('white' ou 'black').
+         * @param {Array<Array<string>>} currentBoard - O estado do tabuleiro para verificar.
          * @returns {boolean} - True se o rei estiver em xeque.
          */
         function isKingInCheck(kingColor, currentBoard = board) {
@@ -1513,13 +1575,13 @@
         }
 
         /**
-         * Verifica se um quadrado específico é atacado por uma peça de uma determinada cor.
-         * Esta função é crucial para a segurança do rei e validação do roque.
-         * @param {number} row - A linha do quadrado a ser verificado.
-         * @param {number} col - A coluna do quadrado a ser verificado.
+         * Verifica se uma casa específica é atacada por uma peça de uma dada cor.
+         * Esta função é crucial para a segurança do rei e validação de roque.
+         * @param {number} row - A linha da casa a ser verificada.
+         * @param {number} col - A coluna da casa a ser verificada.
          * @param {string} attackerColor - A cor das peças que podem estar atacando.
-         * @param {Array<Array<string>>} currentBoard - O estado do tabuleiro a ser verificado.
-         * @returns {boolean} - True se o quadrado for atacado por um atacante da cor especificada.
+         * @param {Array<Array<string>>} currentBoard - O estado do tabuleiro para verificar.
+         * @returns {boolean} - True se a casa for atacada por um atacante da cor especificada.
          */
         function isSquareAttacked(row, col, attackerColor, currentBoard = board) {
             const originalCurrentPlayer = currentPlayer; // Armazena o jogador original
@@ -1533,10 +1595,10 @@
                         // Obtém os movimentos pseudo-legais que esta peça atacante *poderia* fazer
                         const attackerPseudoLegalMoves = getPossibleMoves(piece, r, c, currentBoard);
 
-                        // Verifica se algum dos movimentos pseudo-legais do atacante visa o quadrado especificado
+                        // Verifica se algum dos movimentos pseudo-legais do atacante visa a casa especificada
                         if (attackerPseudoLegalMoves.some(([moveR, moveC]) => moveR === row && moveC === col)) {
                             currentPlayer = originalCurrentPlayer; // Reverte antes de retornar
-                            return true; // A peça atacante pode atacar o quadrado
+                            return true; // A peça atacante pode atacar a casa
                         }
                     }
                 }
@@ -1548,8 +1610,8 @@
         /**
          * Verifica se o jogador atual está em xeque-mate.
          * Itera por todos os movimentos legais possíveis para o jogador atual.
-         * @param {string} playerColor - A cor do jogador a ser verificado ('white' ou 'black').
-         * @param {Array<Array<string>>} currentBoard - O estado do tabuleiro a ser verificado.
+         * @param {string} playerColor - A cor do jogador a ser verificada ('white' ou 'black').
+         * @param {Array<Array<string>>} currentBoard - O estado do tabuleiro para verificar.
          * @returns {boolean} - True se o jogador estiver em xeque-mate.
          */
         function isCheckmate(playerColor, currentBoard = board) {
@@ -1574,14 +1636,14 @@
         }
 
         /**
-         * Verifica se o jogador atual está em afogamento (empate por falta de movimentos legais).
-         * @param {string} playerColor - A cor do jogador a ser verificado ('white' ou 'black').
-         * @param {Array<Array<string>>} currentBoard - O estado do tabuleiro a ser verificado.
-         * @returns {boolean} - True se o jogador estiver em afogamento.
+         * Verifica se o jogador atual está em empate por afogamento (empate por falta de movimentos legais).
+         * @param {string} playerColor - A cor do jogador a ser verificada ('white' ou 'black').
+         * @param {Array<Array<string>>} currentBoard - O estado do tabuleiro para verificar.
+         * @returns {boolean} - True se o jogador estiver em empate por afogamento.
          */
         function isStalemate(playerColor, currentBoard = board) {
             if (isKingInCheck(playerColor, currentBoard)) {
-                return false; // Se estiver em xeque, não é afogamento (é xeque-mate se não houver movimentos legais)
+                return false; // Se estiver em xeque, não é empate por afogamento (é xeque-mate se não houver movimentos legais)
             }
 
             // Verifica se o jogador atual tem algum movimento legal
@@ -1591,12 +1653,12 @@
                     if (piece && ((playerColor === 'white' && isWhitePiece(piece)) || (playerColor === 'black' && isBlackPiece(piece)))) {
                         const legalMoves = getLegalMoves(piece, r, c, currentBoard);
                         if (legalMoves.length > 0) {
-                            return false; // Encontrou pelo menos um movimento legal, então não é afogamento
+                            return false; // Encontrou pelo menos um movimento legal, então não é empate por afogamento
                         }
                     }
                 }
             }
-            return true; // Nenhum movimento legal encontrado para nenhuma peça, e o rei NÃO está em xeque, então é afogamento
+            return true; // Nenhum movimento legal encontrado para nenhuma peça, e o rei NÃO está em xeque, então é empate por afogamento
         }
 
         /**
@@ -1615,7 +1677,7 @@
                         // Adiciona o valor base da peça (positivo para preto, negativo para branco)
                         score += PIECE_VALUES[piece] || 0;
 
-                        // Adiciona pontuação posicional
+                        // Adiciona a pontuação posicional
                         const pieceType = piece.toLowerCase();
                         const isWhite = isWhitePiece(piece);
                         let positionalValue = 0;
@@ -1643,7 +1705,7 @@
                                 break;
                             case 'k':
                                 // Determina se é o final do jogo para usar a tabela de rei apropriada
-                                // Heurística simples: se o total de peças for baixo, é o final do jogo
+                                // Heurística simples: se o total de peças for baixo, é final do jogo
                                 let totalNonKingPieces = 0;
                                 for (let i = 0; i < 8; i++) {
                                     for (let j = 0; j < 8; j++) {
@@ -1667,13 +1729,13 @@
                 }
             }
 
-            // Adiciona bônus para xeque-mate/afogamento
+            // Adiciona bônus para xeque-mate/empate por afogamento
             if (isCheckmate('white', currentBoard)) {
-                score += 100000000; // Grande bônus para o preto dando xeque-mate no branco
+                score += 100000000; // Grande bônus para o preto dar xeque-mate no branco
             } else if (isCheckmate('black', currentBoard)) {
-                score -= 100000000; // Grande penalidade para o preto sendo xeque-mate
+                score -= 100000000; // Grande penalidade para o preto levar xeque-mate
             } else if (isStalemate('white', currentBoard) || isStalemate('black', currentBoard)) {
-                score += 0; // Afogamento é um empate, sem mudança na pontuação
+                score += 0; // Empate por afogamento é um empate, sem mudança na pontuação
             }
 
             // Adiciona um bônus por colocar o oponente em xeque
@@ -1689,7 +1751,7 @@
         }
 
         /**
-         * Decide a melhor peça para a promoção de peão da IA usando avaliação.
+         * Decide a melhor peça para promoção de peão da IA usando avaliação.
          * @param {Array<Array<string>>} currentBoard - O estado do tabuleiro antes da promoção.
          * @param {number} row - A linha onde o peão está promovendo.
          * @param {number} col - A coluna onde o peão está promovendo.
@@ -1710,7 +1772,7 @@
 
                 const evaluation = evaluateBoard(tempBoard);
 
-                if (isWhitePawn) { // IA Branca (jogador minimizador, mas este ramo não será usado, pois nossa IA é preta)
+                if (isWhitePawn) { // IA Branca (jogador minimizador, mas nosso IA é preto, então este ramo não será usado)
                     if (evaluation < bestEvaluation) {
                         bestEvaluation = evaluation;
                         bestPromotedPiece = promotedPieceChar;
@@ -1781,7 +1843,7 @@
                 }
             }
 
-            // Ordena as capturas por valor (captura de maior valor primeiro) para melhor poda
+            // Classifica as capturas por valor (captura mais valiosa primeiro) para melhor poda
             movesToConsider.sort((a, b) => b.capturedPieceValue - a.capturedPieceValue);
 
             if (isMaximizingPlayer) {
@@ -1800,12 +1862,12 @@
                     let promotedPiece = originalPiece;
                     if (originalPiece.toLowerCase() === 'p') {
                         if ((isWhitePiece(originalPiece) && toR === 0) || (isBlackPiece(originalPiece) && toR === 7)) {
-                            promotedPiece = isWhitePiece(originalPiece) ? 'Q' : 'q'; // Ainda padrão para Rainha para simplificar na busca de quiescência
+                            promotedPiece = isWhitePiece(originalPiece) ? 'Q' : 'q'; // Ainda padrão para Rainha para simplificação na busca de quiescência
                             newBoard[toR][toC] = promotedPiece; // Atualiza a peça no novo tabuleiro
                         }
                     }
 
-                    const newCastlingFlags = { ...castlingFlags }; // Passa as flags atualizadas
+                    const newCastlingFlags = { ...castlingFlags }; // Passa flags atualizadas
                     if (originalPiece === 'K') newCastlingFlags.whiteKingMoved = true;
                     if (originalPiece === 'k') newCastlingFlags.blackKingMoved = true;
                     if (originalPiece === 'R' && fromR === 7 && fromC === 0) newCastlingFlags.whiteRookLeftMoved = true;
@@ -1837,12 +1899,12 @@
                     let promotedPiece = originalPiece;
                     if (originalPiece.toLowerCase() === 'p') {
                         if ((isWhitePiece(originalPiece) && toR === 0) || (isBlackPiece(originalPiece) && toR === 7)) {
-                            promotedPiece = isWhitePiece(originalPiece) ? 'Q' : 'q'; // Ainda padrão para Rainha para simplificar na busca de quiescência
+                            promotedPiece = isWhitePiece(originalPiece) ? 'Q' : 'q'; // Ainda padrão para Rainha para simplificação na busca de quiescência
                             newBoard[toR][toC] = promotedPiece; // Atualiza a peça no novo tabuleiro
                         }
                     }
 
-                    const newCastlingFlags = { ...castlingFlags }; // Passa as flags atualizadas
+                    const newCastlingFlags = { ...castlingFlags }; // Passa flags atualizadas
                     if (originalPiece === 'K') newCastlingFlags.whiteKingMoved = true;
                     if (originalPiece === 'k') newCastlingFlags.blackKingMoved = true;
                     if (originalPiece === 'R' && fromR === 7 && fromC === 0) newCastlingFlags.whiteRookLeftMoved = true;
@@ -1907,7 +1969,7 @@
                         const piece = currentBoard[r][c];
                         if (piece && isBlackPiece(piece)) {
                             const moves = getLegalMoves(piece, r, c, currentBoard);
-                            // Ordena os movimentos para eficiência da poda Alpha-Beta dentro do minimax
+                            // Classifica os movimentos para eficiência da poda Alpha-Beta dentro do minimax
                             moves.sort((a, b) => {
                                 const targetPieceA = currentBoard[a[0]][a[1]]; // Peça no destino para o movimento A
                                 const targetPieceB = currentBoard[b[0]][b[1]]; // Peça no destino para o movimento B
@@ -1982,7 +2044,7 @@
                         const piece = currentBoard[r][c];
                         if (piece && isWhitePiece(piece)) {
                             const moves = getLegalMoves(piece, r, c, currentBoard);
-                            // Ordena os movimentos para eficiência da poda Alpha-Beta dentro do minimax
+                            // Classifica os movimentos para eficiência da poda Alpha-Beta dentro do minimax
                             moves.sort((a, b) => {
                                 const targetPieceA = currentBoard[a[0]][a[1]]; // Peça no destino para o movimento A
                                 const targetPieceB = currentBoard[b[0]][b[1]]; // Peça no destino para o movimento B
@@ -2087,7 +2149,7 @@
                 }
             }
 
-            // Ordena os movimentos para eficiência da poda Alpha-Beta
+            // Classifica os movimentos para eficiência da poda Alpha-Beta
             allPossibleMoves.sort((a, b) => {
                 // Prioriza capturas de peças de maior valor
                 if (a.capturedPieceValue !== b.capturedPieceValue) {
@@ -2110,7 +2172,7 @@
                 // Promoção de Peão no tabuleiro simulado para A (IA sempre promove para Rainha)
                 if (a.piece.toLowerCase() === 'p') {
                     if ((isWhitePiece(a.piece) && a.to[0] === 0) || (isBlackPiece(a.piece) && a.to[0] === 7)) {
-                        // Para ordenação, assume temporariamente a promoção para rainha para uma verificação rápida
+                        // Para classificação, assume temporariamente a promoção para rainha para uma verificação rápida
                         boardAfterA[a.to[0]][a.to[1]] = isWhitePiece(a.piece) ? 'Q' : 'q';
                     }
                 }
@@ -2136,7 +2198,7 @@
                 // Promoção de Peão no tabuleiro simulado para B (IA sempre promove para Rainha)
                 if (b.piece.toLowerCase() === 'p') {
                     if ((isWhitePiece(b.piece) && b.to[0] === 0) || (isBlackPiece(b.piece) && b.to[0] === 7)) {
-                        // Para ordenação, assume temporariamente a promoção para rainha para uma verificação rápida
+                        // Para classificação, assume temporariamente a promoção para rainha para uma verificação rápida
                         boardAfterB[b.to[0]][b.to[1]] = isWhitePiece(b.piece) ? 'Q' : 'q';
                     }
                 }
@@ -2197,15 +2259,18 @@
                 // Se for um movimento de roque, também move a torre no tabuleiro simulado
                 if (piece.toLowerCase() === 'k' && Math.abs(toC - fromC) === 2) {
                     let rookOriginalCol;
-                    let rookFinalCol;
                     if (toC > fromC) { // Roque do lado do rei
                         rookOriginalCol = 7;
-                        rookFinalCol = fromC + 1;
                     } else { // Roque do lado da rainha
                         rookOriginalCol = 0;
-                        rookFinalCol = fromC - 1;
                     }
                     const rookPiece = newBoard[fromR][rookOriginalCol];
+                    let rookFinalCol;
+                    if (toC > fromC) { // Roque do lado do rei
+                        rookFinalCol = fromC + 1;
+                    } else { // Roque do lado da rainha
+                        rookFinalCol = fromC - 1;
+                    }
                     newBoard[fromR][rookFinalCol] = rookPiece;
                     newBoard[fromR][rookOriginalCol] = '';
                 }
@@ -2227,7 +2292,7 @@
                     bestMove = move;
                 } else if (evaluation === maxEval) {
                     // Se as avaliações forem iguais, prefere movimentos que capturam peças de maior valor
-                    // Esta lógica agora é tratada pela ordenação inicial.
+                    // Esta lógica agora é tratada pela classificação inicial.
                     // Mantém um desempate aleatório para movimentos verdadeiramente idênticos
                     if (Math.random() < 0.5) {
                         bestMove = move;
@@ -2246,7 +2311,7 @@
                     finalPromotedPiece = decidePromotionPieceForAI(board, toR, toC, isWhitePiece(piece));
                 }
 
-                // Lida com o roque como um caso especial para a atualização real do tabuleiro
+                // Lida com o roque como um caso especial para a atualização do tabuleiro real
                 if (piece.toLowerCase() === 'k' && Math.abs(toC - fromC) === 2) {
                     let rookOriginalCol;
                     if (toC > fromC) { // Roque do lado do rei
@@ -2263,9 +2328,9 @@
                 switchPlayer(); // Troca para o próximo jogador (humano)
                 saveCurrentState(); // Salva o movimento da IA no histórico
             } else {
-                // Se nenhum melhor movimento for encontrado (ex: afogamento ou xeque-mate detectado pela IA)
-                console.warn("A IA não conseguiu encontrar um movimento. Isso pode indicar afogamento ou xeque-mate.");
-                // O estado do jogo já deve ser atualizado por switchPlayer se for xeque-mate/afogamento
+                // Se nenhum melhor movimento for encontrado (ex: empate por afogamento ou xeque-mate detectado pela IA)
+                console.warn("A IA não conseguiu encontrar um movimento. Isso pode indicar empate por afogamento ou xeque-mate.");
+                // O estado do jogo já deve ser atualizado por switchPlayer se for xeque-mate/empate por afogamento
             }
             isThinking = false;
             updateHistoryButtons();
@@ -2282,12 +2347,9 @@
 
         // Inicializa o jogo sempre mostrando o menu principal primeiro
         document.addEventListener('DOMContentLoaded', () => {
-            initializeZobristTable(); // Inicializa a tabela Zobrist uma vez no carregamento
+            initializeZobristTable(); // Inicializa a tabela Zobrist uma vez ao carregar
             showMainMenu(); // Sempre inicia no menu principal
         });
-
-        // Adiciona listener de evento para redimensionamento da janela para ajustar o tamanho do quadrado do tabuleiro
-        window.addEventListener('resize', adjustChessboardSquareSize);
     </script>
 </body>
 </html>
