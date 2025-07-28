@@ -176,18 +176,10 @@
             /* Tamanho responsivo da peça, agora sem limite mínimo/máximo explícito além do vmin */
             font-size: 5vmin; /* Alterado de 30px para 8vmin */
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-            transition: transform 0.1s ease-out;
+            /* A transição para o movimento será definida dinamicamente no JS */
         }
 
-        /* Contra-rotaciona as peças quando o tabuleiro é rotacionado para 180deg */
-        .chessboard.animating-forward .piece {
-            transform: rotate(180deg);
-        }
-
-        /* Contra-rotaciona as peças quando o tabuleiro está em 180deg e volta para 0deg */
-        .chessboard.animating-backward .piece {
-            transform: rotate(0deg); /* Volta as peças para a orientação normal */
-        }
+        /* Removidas as regras CSS de rotação de peça, agora controladas por JS */
 
         .piece:active {
             cursor: grabbing;
@@ -885,6 +877,8 @@
 
         /**
          * Renderiza o tabuleiro de xadrez com base no estado 'board' atual.
+         * Esta função é usada para a renderização inicial e ao carregar estados do histórico.
+         * Os movimentos individuais são manipulados diretamente no DOM para animação.
          */
         function renderBoard() {
             chessboardElement.innerHTML = ''; // Limpa o tabuleiro existente
@@ -900,6 +894,11 @@
                         const pieceElement = document.createElement('span');
                         pieceElement.classList.add('piece', isWhitePiece(piece) ? 'white-piece' : 'black-piece');
                         pieceElement.innerHTML = PIECES[piece];
+
+                        // Aplica a rotação inicial da peça para que ela esteja sempre na vertical
+                        const pieceInitialRotation = (gameMode === 'player' && currentPlayer === 'black') ? 'rotate(180deg)' : 'rotate(0deg)';
+                        pieceElement.style.transform = pieceInitialRotation;
+
                         square.appendChild(pieceElement);
                     }
 
@@ -952,8 +951,7 @@
                         if (isValidCastling(prevRow, prevCol, row, rookCol)) { // Passa a linha de destino do rei e a coluna original da torre
                             makeCastlingMove(prevRow, prevCol, row, rookCol);
                             deselectPiece();
-                            switchPlayer();
-                            saveCurrentState();
+                            // A troca de jogador e o salvamento do estado ocorrem APÓS a animação em makeCastlingMove
                             return; // A jogada de roque foi feita, sai do manipulador
                         }
                     }
@@ -962,15 +960,7 @@
                 // Tenta mover a peça selecionada (movimento regular)
                 if (isValidMove(prevPiece, prevRow, prevCol, row, col)) {
                     makeMove(prevRow, prevCol, row, col);
-                    // Verifica promoção de peão após fazer a jogada
-                    if (prevPiece.toLowerCase() === 'p' && ((isWhitePiece(prevPiece) && row === 0) || (isBlackPiece(prevPiece) && row === 7))) {
-                        promotionTarget = [row, col]; // Armazena a casa de destino para promoção
-                        showPromotionModal(isWhitePiece(prevPiece));
-                    } else {
-                        deselectPiece();
-                        switchPlayer();
-                        saveCurrentState(); // Salva o estado após um movimento válido e troca de jogador
-                    }
+                    // A promoção, troca de jogador e salvamento do estado ocorrem APÓS a animação em makeMove
                 } else {
                     // Se clicar em uma nova peça da cor do jogador atual, seleciona-a
                     if (pieceAtSquare && isCurrentPlayerPiece(pieceAtSquare)) {
@@ -1030,11 +1020,22 @@
 
             board[row][col] = chosenPiece; // Promove o peão
 
+            // Atualiza o elemento da peça no DOM
+            const promotedSquareElement = chessboardElement.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+            const pieceElement = promotedSquareElement.querySelector('.piece');
+            if (pieceElement) {
+                pieceElement.innerHTML = PIECES[chosenPiece];
+                pieceElement.className = ''; // Limpa as classes existentes
+                pieceElement.classList.add('piece', isWhitePiece(chosenPiece) ? 'white-piece' : 'black-piece');
+                // Garante que a peça promovida esteja na vertical
+                const pieceRotation = (gameMode === 'player' && currentPlayer === 'black') ? 'rotate(180deg)' : 'rotate(0deg)';
+                pieceElement.style.transform = pieceRotation;
+            }
+
             promotionModal.classList.add('hidden'); // Oculta o modal
             chessboardElement.style.pointerEvents = 'auto'; // Reabilita a interação do tabuleiro
             promotionTarget = null; // Limpa o alvo de promoção
 
-            renderBoard();
             deselectPiece(); // Garante que nenhuma peça esteja selecionada após a promoção
             switchPlayer(); // Troca para o próximo jogador
             saveCurrentState(); // Salva o estado após a promoção
@@ -1103,7 +1104,7 @@
         }
 
         /**
-         * Faz um movimento no tabuleiro.
+         * Faz um movimento no tabuleiro com animação.
          * @param {number} fromRow - Linha de partida.
          * @param {number} fromCol - Coluna de partida.
          * @param {number} toRow - Linha de destino.
@@ -1111,48 +1112,129 @@
          * @param {string} [promotedToPiece] - Opcional: A peça para promover (ex: 'Q', 'n').
          */
         function makeMove(fromRow, fromCol, toRow, toCol, promotedToPiece = null) {
-            const movedPiece = board[fromRow][fromCol];
-            const capturedPiece = board[toRow][toCol]; // Obtém a peça capturada antes de mover
+            const movedPieceChar = board[fromRow][fromCol];
+            const capturedPieceChar = board[toRow][toCol];
 
-            // Atualiza as flags de roque
-            if (movedPiece === 'K') whiteKingMoved = true;
-            if (movedPiece === 'k') blackKingMoved = true;
-            if (movedPiece === 'R' && fromRow === 7 && fromCol === 0) whiteRookLeftMoved = true;
-            if (movedPiece === 'R' && fromRow === 7 && fromCol === 7) whiteRookRightMoved = true;
-            if (movedPiece === 'r' && fromRow === 0 && fromCol === 0) blackRookLeftMoved = true;
-            if (movedPiece === 'r' && fromRow === 0 && fromCol === 7) blackRookRightMoved = true;
+            const fromSquareElement = chessboardElement.querySelector(`[data-row="${fromRow}"][data-col="${fromCol}"]`);
+            const toSquareElement = chessboardElement.querySelector(`[data-row="${toRow}"][data-col="${toCol}"]`);
+            const pieceElement = fromSquareElement.querySelector('.piece');
 
-            // Atualiza o hash Zobrist para o movimento
-            currentZobristHash ^= ZOBRIST_TABLE[movedPiece][fromRow][fromCol];
-            if (capturedPiece) {
-                currentZobristHash ^= ZOBRIST_TABLE[capturedPiece][toRow][toCol]; // XOR da peça capturada
+            if (!pieceElement) return; // Não deve acontecer se selectedPiece for válido
+
+            // Determina a rotação vertical da peça com base no estado do tabuleiro
+            const targetPieceRotation = (gameMode === 'player' && currentPlayer === 'black') ? 'rotate(180deg)' : 'rotate(0deg)';
+
+            // Calcula a translação necessária para a animação
+            const fromRect = fromSquareElement.getBoundingClientRect();
+            const toRect = toSquareElement.getBoundingClientRect();
+
+            let offsetX = toRect.left - fromRect.left;
+            let offsetY = toRect.top - fromRect.top;
+
+            // Ajusta os offsets se o tabuleiro estiver rotacionado para o jogador preto
+            if (gameMode === 'player' && currentPlayer === 'black') {
+                offsetX = -offsetX; // Inverte o eixo X
+                offsetY = -offsetY; // Inverte o eixo Y
             }
 
-            board[toRow][toCol] = movedPiece; // Move a peça
-            board[fromRow][fromCol] = ''; // Limpa a posição original
+            // Remove temporariamente a transição para evitar animação indesejada ao definir a posição inicial
+            pieceElement.style.transition = 'none';
 
-            // Verifica Promoção de Peão
-            if (movedPiece.toLowerCase() === 'p' && ((isWhitePiece(movedPiece) && toRow === 0) || (isBlackPiece(movedPiece) && toRow === 7))) {
-                const finalPromotedPiece = promotedToPiece || (isWhitePiece(movedPiece) ? 'Q' : 'q'); // Padrão para Rainha se não especificado pela IA ou humano
-                currentZobristHash ^= ZOBRIST_TABLE[movedPiece][toRow][toCol]; // XOR do peão que acabou de se mover
-                currentZobristHash ^= ZOBRIST_TABLE[finalPromotedPiece][toRow][toCol]; // XOR da nova peça promovida
-                board[toRow][toCol] = finalPromotedPiece;
-            } else {
-                currentZobristHash ^= ZOBRIST_TABLE[movedPiece][toRow][toCol]; // XOR da peça movida (se não houver promoção)
+            // Define a transformação inicial da peça para a sua rotação vertical (sem translação ainda)
+            pieceElement.style.transform = targetPieceRotation;
+
+            // Força um reflow para aplicar a transformação inicial imediatamente
+            void pieceElement.offsetWidth;
+
+            // Adiciona novamente a transição para a animação de movimento
+            pieceElement.style.transition = 'transform 0.3s ease-out';
+
+            // Aplica a transformação combinada: translação primeiro, depois a rotação desejada
+            pieceElement.style.transform = `translate(${offsetX}px, ${offsetY}px) ${targetPieceRotation}`;
+
+            // Lida com a peça capturada: remove-a imediatamente do DOM
+            if (capturedPieceChar) {
+                const capturedPieceElement = toSquareElement.querySelector('.piece');
+                if (capturedPieceElement) {
+                    capturedPieceElement.remove();
+                }
             }
 
-            // XOR do turno antigo e XOR do novo turno (apenas se não estiver esperando promoção humana)
-            if (! (movedPiece.toLowerCase() === 'p' && ((isWhitePiece(movedPiece) && toRow === 0) || (isBlackPiece(movedPiece) && toRow === 7)) && !isThinking) ) {
-                currentZobristHash ^= ZOBRIST_TABLE.turn[currentPlayer];
-                const newPlayer = currentPlayer === 'white' ? 'black' : 'white';
-                currentZobristHash ^= ZOBRIST_TABLE.turn[newPlayer];
-            }
+            // Após a animação, atualiza o array do tabuleiro e move o elemento da peça para o novo quadrado
+            setTimeout(() => {
+                // Atualiza as flags de roque
+                if (movedPieceChar === 'K') whiteKingMoved = true;
+                if (movedPieceChar === 'k') blackKingMoved = true;
+                if (movedPieceChar === 'R' && fromRow === 7 && fromCol === 0) whiteRookLeftMoved = true;
+                if (movedPieceChar === 'R' && fromRow === 7 && fromCol === 7) whiteRookRightMoved = true;
+                if (movedPieceChar === 'r' && fromRow === 0 && fromCol === 0) blackRookLeftMoved = true;
+                if (movedPieceChar === 'r' && fromRow === 0 && fromCol === 7) blackRookRightMoved = true;
 
-            renderBoard(); // Renderiza novamente o tabuleiro
+                // Atualiza o hash Zobrist para o movimento
+                currentZobristHash ^= ZOBRIST_TABLE[movedPieceChar][fromRow][fromCol];
+                if (capturedPieceChar) {
+                    currentZobristHash ^= ZOBRIST_TABLE[capturedPieceChar][toRow][toCol]; // XOR da peça capturada
+                }
+
+                // Atualiza o estado interno do tabuleiro
+                board[toRow][toCol] = movedPieceChar;
+                board[fromRow][fromCol] = '';
+
+                // Lida com a lógica de promoção
+                let finalPieceChar = movedPieceChar;
+                if (movedPieceChar.toLowerCase() === 'p' && ((isWhitePiece(movedPieceChar) && toRow === 0) || (isBlackPiece(movedPieceChar) && toRow === 7))) {
+                    finalPieceChar = promotedToPiece || (isWhitePiece(movedPieceChar) ? 'Q' : 'q'); // Padrão para Rainha
+                    // Atualiza o hash Zobrist para promoção
+                    currentZobristHash ^= ZOBRIST_TABLE[movedPieceChar][toRow][toCol]; // XOR do peão
+                    currentZobristHash ^= ZOBRIST_TABLE[finalPieceChar][toRow][toCol]; // XOR da nova peça promovida
+                    board[toRow][toCol] = finalPieceChar; // Atualiza o tabuleiro com a peça promovida
+                } else {
+                    currentZobristHash ^= ZOBRIST_TABLE[movedPieceChar][toRow][toCol]; // XOR da peça movida (se não houver promoção)
+                }
+
+                // XOR do turno antigo e XOR do novo turno (apenas se não estiver esperando promoção humana)
+                if (! (movedPieceChar.toLowerCase() === 'p' && ((isWhitePiece(movedPieceChar) && toRow === 0) || (isBlackPiece(movedPieceChar) && toRow === 7)) && !isThinking) ) {
+                    currentZobristHash ^= ZOBRIST_TABLE.turn[currentPlayer];
+                    const newPlayer = currentPlayer === 'white' ? 'black' : 'white';
+                    currentZobristHash ^= ZOBRIST_TABLE.turn[newPlayer];
+                }
+
+                // Move o elemento da peça para o novo quadrado no DOM
+                toSquareElement.appendChild(pieceElement);
+                // Redefine a transformação da peça para apenas a sua rotação vertical
+                pieceElement.style.transform = targetPieceRotation;
+                pieceElement.style.transition = ''; // Reinicia a transição para o próximo movimento
+
+                // Se foi uma promoção, atualiza o HTML da peça
+                if (finalPieceChar !== movedPieceChar) {
+                    pieceElement.innerHTML = PIECES[finalPieceChar];
+                    pieceElement.className = ''; // Limpa as classes existentes
+                    pieceElement.classList.add('piece', isWhitePiece(finalPieceChar) ? 'white-piece' : 'black-piece');
+                    pieceElement.style.transform = targetPieceRotation; // Garante que a peça promovida esteja na vertical
+                }
+
+                // Limpa o quadrado antigo no DOM (garante que o quadrado antigo esteja vazio)
+                fromSquareElement.innerHTML = '';
+
+                // Continua o fluxo do jogo
+                deselectPiece();
+                // Verifica promoção de peão após fazer a jogada
+                if (!(movedPieceChar.toLowerCase() === 'p' && ((isWhitePiece(movedPieceChar) && toRow === 0) || (isBlackPiece(movedPieceChar) && toRow === 7)))) {
+                    switchPlayer();
+                    saveCurrentState(); // Salva o estado após um movimento válido e troca de jogador
+                } else if (!isThinking) { // Se for uma promoção e não for a IA, mostra o modal
+                    promotionTarget = [toRow, toCol]; // Armazena a casa de destino para promoção
+                    showPromotionModal(isWhitePiece(movedPieceChar));
+                } else { // Se for uma promoção e for a IA, já lidou com isso
+                    switchPlayer();
+                    saveCurrentState();
+                }
+
+            }, 300); // Duração da animação (0.3s)
         }
 
         /**
-         * Executa um movimento de roque.
+         * Executa um movimento de roque com animação.
          * @param {number} kingStartRow - Linha da posição inicial do Rei.
          * @param {number} kingStartCol - Coluna da posição inicial do Rei.
          * @param {number} kingEndRow - Linha da posição final do Rei (casa de roque).
@@ -1160,57 +1242,119 @@
          */
         function makeCastlingMove(kingStartRow, kingStartCol, kingEndRow, rookOriginalCol) {
             const isWhite = isWhitePiece(board[kingStartRow][kingStartCol]);
-            const kingPiece = board[kingStartRow][kingStartCol];
-            const rookPiece = board[kingEndRow][rookOriginalCol]; // A Torre está na mesma linha que o rei
+            const kingPieceChar = board[kingStartRow][kingStartCol];
+            const rookPieceChar = board[kingEndRow][rookOriginalCol];
 
-            // Atualiza as flags de roque
-            if (isWhite) {
-                whiteKingMoved = true;
-                if (rookOriginalCol === 0) whiteRookLeftMoved = true; // Roque do lado da rainha
-                else whiteRookRightMoved = true; // Roque do lado do rei
-            } else {
-                blackKingMoved = true;
-                if (rookOriginalCol === 0) blackRookLeftMoved = true; // Roque do lado da rainha
-                else blackRookRightMoved = true; // Roque do lado do rei
-            }
+            const kingStartSquare = chessboardElement.querySelector(`[data-row="${kingStartRow}"][data-col="${kingStartCol}"]`);
+            const rookStartSquare = chessboardElement.querySelector(`[data-row="${kingEndRow}"][data-col="${rookOriginalCol}"]`);
+            const kingPieceElement = kingStartSquare.querySelector('.piece');
+            const rookPieceElement = rookStartSquare.querySelector('.piece');
 
-            // Determina a coluna final do rei e a coluna final da torre
+            if (!kingPieceElement || !rookPieceElement) return;
+
             let kingFinalCol;
             let rookFinalCol;
-            let rookStartCol = rookOriginalCol; // Esta é a coluna inicial real da torre
 
             if (rookOriginalCol === 7) { // Roque do lado do rei
                 kingFinalCol = kingStartCol + 2;
                 rookFinalCol = kingStartCol + 1;
-            } else { // Roque do lado da rainha (rookOriginalCol === 0)
+            } else { // Roque do lado da rainha
                 kingFinalCol = kingStartCol - 2;
                 rookFinalCol = kingStartCol - 1;
             }
 
-            // Atualiza o hash Zobrist para o roque:
-            // 1. XOR da posição antiga do rei, XOR da nova posição do rei
-            currentZobristHash ^= ZOBRIST_TABLE[kingPiece][kingStartRow][kingStartCol];
-            currentZobristHash ^= ZOBRIST_TABLE[kingPiece][kingEndRow][kingFinalCol];
-            // 2. XOR da posição antiga da torre, XOR da nova posição da torre
-            currentZobristHash ^= ZOBRIST_TABLE[rookPiece][kingEndRow][rookStartCol];
-            currentZobristHash ^= ZOBRIST_TABLE[rookPiece][kingEndRow][rookFinalCol];
-            // 3. XOR do turno antigo e XOR do novo turno
-            currentZobristHash ^= ZOBRIST_TABLE.turn[currentPlayer];
-            const newPlayer = currentPlayer === 'white' ? 'black' : 'white';
-            currentZobristHash ^= ZOBRIST_TABLE.turn[newPlayer];
-            // 4. Também XOR de/para as mudanças nos direitos de roque (simplificado por enquanto, mas um Zobrist completo faria isso)
+            const kingEndSquare = chessboardElement.querySelector(`[data-row="${kingEndRow}"][data-col="${kingFinalCol}"]`);
+            const rookEndSquare = chessboardElement.querySelector(`[data-row="${kingEndRow}"][data-col="${rookFinalCol}"]`);
 
+            // Determina a rotação vertical das peças com base no estado do tabuleiro
+            const targetPieceRotation = (gameMode === 'player' && currentPlayer === 'black') ? 'rotate(180deg)' : 'rotate(0deg)';
 
-            // Move o Rei
-            board[kingEndRow][kingFinalCol] = kingPiece;
-            board[kingStartRow][kingStartCol] = '';
+            // Calcula o deslocamento da animação do rei
+            const kingFromRect = kingStartSquare.getBoundingClientRect();
+            const kingToRect = kingEndSquare.getBoundingClientRect();
+            let kingOffsetX = kingToRect.left - kingFromRect.left;
+            let kingOffsetY = kingToRect.top - kingFromRect.top;
 
-            // Move a Torre
-            board[kingEndRow][rookFinalCol] = rookPiece;
-            board[kingEndRow][rookStartCol] = '';
+            // Calcula o deslocamento da animação da torre
+            const rookFromRect = rookStartSquare.getBoundingClientRect();
+            const rookToRect = rookEndSquare.getBoundingClientRect();
+            let rookOffsetX = rookToRect.left - rookFromRect.left;
+            let rookOffsetY = rookToRect.top - rookFromRect.top;
 
+            // Ajusta os offsets se o tabuleiro estiver rotacionado para o jogador preto
+            if (gameMode === 'player' && currentPlayer === 'black') {
+                kingOffsetX = -kingOffsetX;
+                kingOffsetY = -kingOffsetY;
+                rookOffsetX = -rookOffsetX;
+                rookOffsetY = -rookOffsetY;
+            }
 
-            renderBoard();
+            // Remove temporariamente a transição para rei e torre
+            kingPieceElement.style.transition = 'none';
+            rookPieceElement.style.transition = 'none';
+
+            // Define as transformações iniciais para a rotação vertical
+            kingPieceElement.style.transform = targetPieceRotation;
+            rookPieceElement.style.transform = targetPieceRotation;
+
+            // Força reflow
+            void kingPieceElement.offsetWidth;
+            void rookPieceElement.offsetWidth;
+
+            // Adiciona novamente a transição para o movimento
+            kingPieceElement.style.transition = 'transform 0.3s ease-out';
+            rookPieceElement.style.transition = 'transform 0.3s ease-out';
+
+            // Aplica as transformações combinadas para a animação
+            kingPieceElement.style.transform = `translate(${kingOffsetX}px, ${kingOffsetY}px) ${targetPieceRotation}`;
+            rookPieceElement.style.transform = `translate(${rookOffsetX}px, ${rookOffsetY}px) ${targetPieceRotation}`;
+
+            setTimeout(() => {
+                // Atualiza as flags de roque
+                if (isWhite) {
+                    whiteKingMoved = true;
+                    if (rookOriginalCol === 0) whiteRookLeftMoved = true;
+                    else whiteRookRightMoved = true;
+                } else {
+                    blackKingMoved = true;
+                    if (rookOriginalCol === 0) blackRookLeftMoved = true;
+                    else blackRookRightMoved = true;
+                }
+
+                // Atualiza o hash Zobrist para o roque
+                currentZobristHash ^= ZOBRIST_TABLE[kingPieceChar][kingStartRow][kingStartCol];
+                currentZobristHash ^= ZOBRIST_TABLE[kingPieceChar][kingEndRow][kingFinalCol];
+                currentZobristHash ^= ZOBRIST_TABLE[rookPieceChar][kingEndRow][rookOriginalCol];
+                currentZobristHash ^= ZOBRIST_TABLE[rookPieceChar][kingEndRow][rookFinalCol];
+                currentZobristHash ^= ZOBRIST_TABLE.turn[currentPlayer]; // Corrigido: Estava faltando o operador ^=
+                const newPlayer = currentPlayer === 'white' ? 'black' : 'white';
+                currentZobristHash ^= ZOBRIST_TABLE.turn[newPlayer];
+
+                // Atualiza o estado interno do tabuleiro
+                board[kingEndRow][kingFinalCol] = kingPieceChar;
+                board[kingStartRow][kingStartCol] = '';
+                board[kingEndRow][rookFinalCol] = rookPieceChar;
+                board[kingEndRow][rookOriginalCol] = '';
+
+                // Move os elementos das peças no DOM
+                kingEndSquare.appendChild(kingPieceElement);
+                rookEndSquare.appendChild(rookPieceElement);
+
+                // Limpa os quadrados antigos no DOM
+                kingStartSquare.innerHTML = '';
+                rookStartSquare.innerHTML = '';
+
+                // Redefine as transformações para apenas a rotação vertical
+                kingPieceElement.style.transform = targetPieceRotation;
+                rookPieceElement.style.transform = targetPieceRotation;
+                kingPieceElement.style.transition = ''; // Reinicia a transição
+                rookPieceElement.style.transition = ''; // Reinicia a transição
+
+                // Continua o fluxo do jogo
+                deselectPiece();
+                switchPlayer();
+                saveCurrentState();
+            }, 300); // Duração da animação
         }
 
         /**
@@ -1223,26 +1367,44 @@
             chessboardElement.classList.remove('animating-forward', 'animating-backward');
 
             if (gameMode === 'player') {
-                // Determina a rotação inicial para a próxima animação
-                // Se estamos girando PARA o preto (180deg), começamos de 0deg.
-                // Se estamos girando PARA o branco (0deg), começamos de 180deg.
-                const startRotationForAnimation = (playerToRotateTo === 'black') ? 'rotate(0deg)' : 'rotate(180deg)';
-
-                // Define a transformação para o ponto de partida da animação
-                chessboardElement.style.transform = startRotationForAnimation;
-
-                // Força um reflow para fazer o navegador registrar a mudança em 'transform'
-                void chessboardElement.offsetWidth;
-
-                // Aplica a classe de animação apropriada
+                // Define a transformação inicial para a animação
                 if (playerToRotateTo === 'black') {
-                    chessboardElement.classList.add('animating-forward');
-                } else {
-                    chessboardElement.classList.add('animating-backward');
+                    // Se o tabuleiro deve ir para 180deg (preto), começa de 0deg
+                    chessboardElement.style.transform = 'rotate(0deg)';
+                    void chessboardElement.offsetWidth; // Força reflow
+                    chessboardElement.classList.add('animating-forward'); // Anima para 180deg
+                } else { // playerToRotateTo === 'white'
+                    // Se o tabuleiro deve ir para 0deg (branco), começa de 180deg
+                    chessboardElement.style.transform = 'rotate(180deg)';
+                    void chessboardElement.offsetWidth; // Força reflow
+                    chessboardElement.classList.add('animating-backward'); // Anima para 0deg
                 }
+
+                // Atualiza a rotação de todas as peças para que permaneçam na vertical
+                const pieceElements = chessboardElement.querySelectorAll('.piece');
+                const pieceTargetRotation = (playerToRotateTo === 'black') ? 'rotate(180deg)' : 'rotate(0deg)';
+
+                pieceElements.forEach(pieceEl => {
+                    // Garante uma transição suave para a rotação da peça também
+                    pieceEl.style.transition = 'transform 0.8s ease-in-out'; // Corresponde à duração da animação do tabuleiro
+                    pieceEl.style.transform = pieceTargetRotation;
+                });
+
+                // Após a animação, remove a propriedade de transição para evitar interferência com as animações de movimento
+                setTimeout(() => {
+                    pieceElements.forEach(pieceEl => {
+                        pieceEl.style.transition = ''; // Reinicia para o padrão (0.3s para movimento)
+                    });
+                }, 800); // Corresponde à duração da animação do tabuleiro
             } else {
                 // No modo computador, sempre garante rotação de 0deg sem animação
                 chessboardElement.style.transform = 'rotate(0deg)';
+                // Garante que todas as peças estejam na vertical (rotação de 0deg) no modo computador
+                const pieceElements = chessboardElement.querySelectorAll('.piece');
+                pieceElements.forEach(pieceEl => {
+                    pieceEl.style.transform = 'rotate(0deg)';
+                    pieceEl.style.transition = ''; // Reinicia a transição
+                });
             }
         }
 
@@ -1296,7 +1458,7 @@
          * @param {string} piece - O caractere da peça.
          * @param {number} fromRow - Linha de partida.
          * @param {number} fromCol - Coluna de partida.
-         * @param {number} toRow - Linha de destino.
+         * @param {number} toRow - Linuna de destino.
          * @param {number} toCol - Coluna de destino.
          * @param {Array<Array<string>>} currentBoard - O estado do tabuleiro para verificar.
          * @returns {boolean} - True se o movimento for válido e legal.
@@ -2371,9 +2533,9 @@
                     makeMove(fromR, fromC, toR, toC, finalPromotedPiece);
                 }
 
-                deselectPiece(); // Garante que nenhuma peça esteja selecionada após o movimento da IA
-                switchPlayer(); // Troca para o próximo jogador (humano)
-                saveCurrentState(); // Salva o movimento da IA no histórico
+                // deselectPiece(); // Desseleciona a peça após o movimento da IA (já está em makeMove/makeCastlingMove)
+                // switchPlayer(); // Troca para o próximo jogador (humano) (já está em makeMove/makeCastlingMove)
+                // saveCurrentState(); // Salva o movimento da IA no histórico (já está em makeMove/makeCastlingMove)
             } else {
                 // Se nenhum melhor movimento for encontrado (ex: empate por afogamento ou xeque-mate detectado pela IA)
                 console.warn("A IA não conseguiu encontrar um movimento. Isso pode indicar empate por afogamento ou xeque-mate.");
