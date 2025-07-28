@@ -83,13 +83,9 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 0.5vmin; /* Reintroduzido um pequeno padding em vmin */
-            border-radius: 15px;
             /* Usando vmin para garantir que o contêiner se ajuste à menor dimensão da viewport */
             width: 100%; /* Ocupa 100% da largura do pai */
-            height: 100%; /* Ocupa 100% da altura do pai */
-            max-width: 98vmin; /* Limita a largura máxima à menor dimensão da viewport */
-            max-height: 98vmin; /* Limita a altura máxima à menor dimensão da viewport */
+            aspect-ratio:1/1;
             position: relative; /* Necessário para posicionamento absoluto do modal de promoção */
             box-sizing: border-box; /* Inclui padding na largura/altura */
             gap: 0.5vmin; /* Reintroduzido um pequeno gap em vmin */
@@ -97,8 +93,8 @@
             justify-content: space-between; /* Distribui o espaço verticalmente */
             align-self: center; /* Centraliza o game-container se o body for maior */
             z-index: 1; /* Garante que esteja acima do fundo da tela inicial */
-            background-color: #2d3748; /* Adicionar um fundo para visualização */
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* Adicionar uma sombra para destacar */
+            margin-top:50px;
+            margin-bottom:50px;
         }
 
         .chessboard {
@@ -106,7 +102,6 @@
             grid-template-columns: repeat(8, 1fr); /* Colunas responsivas */
             grid-template-rows: repeat(8, 1fr); /* Linhas responsivas */
             border: 0.5vmin solid #4a5568; /* Alterado para vmin */
-            border-radius: 8px;
             overflow: hidden; /* Garante que os cantos arredondados se apliquem às casas */
             box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
             /* Removido transition: transform, pois a animação @keyframes irá controlá-lo */
@@ -228,8 +223,7 @@
             background-color: #4299e1; /* Botão azul */
             color: white;
             padding: 1.5vmin 3vmin; /* Alterado para vmin */
-            border-radius: 10px;
-            font-size: 2.5vmin; /* Alterado para vmin */
+            font-size: 2vmin; /* Alterado para vmin */
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.2s ease;
             box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
@@ -257,7 +251,6 @@
             flex-direction: column;
             align-items: center;
             padding: 6vmin; /* Alterado para vmin */
-            border-radius: 15px;
             max-width: 500px;
             width: 100%;
             text-align: center;
@@ -269,7 +262,6 @@
             background-color: #48bb78; /* Botão verde */
             color: white;
             padding: 2.5vmin 5vmin; /* Alterado para vmin */
-            border-radius: 10px;
             font-size: 3.5vmin; /* Alterado para vmin */
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.2s ease;
@@ -302,7 +294,6 @@
             transform: translate(-50%, -50%);
             background-color: #2d3748;
             padding: 4vmin; /* Alterado para vmin */
-            border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
             z-index: 1000;
             display: flex;
@@ -330,7 +321,6 @@
             background-color: #48bb78; /* Botão verde */
             color: white;
             padding: 2.5vmin; /* Alterado para vmin */
-            border-radius: 10px;
             font-size: 5vmin; /* Alterado para vmin */
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.2s ease;
