@@ -389,6 +389,18 @@
                 background-color: rgba(255, 255, 0, 0); /* Transparente */
             }
         }
+
+        /* Adicionado media query para empilhar botões em telas menores */
+        @media (max-width: 768px) {
+            .control-buttons {
+                flex-direction: column; /* Empilha os botões verticalmente */
+                align-items: center; /* Centraliza os botões horizontalmente na coluna */
+            }
+            .game-button {
+                width: 100%; /* Faz com que os botões ocupem a largura total disponível */
+                max-width: 250px; /* Opcional: limita a largura máxima para não ficarem muito largos em tablets */
+            }
+        }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen">
@@ -1140,6 +1152,8 @@
         // Inicializa o Tone.Player para o som de captura
         let captureSoundPlayer;
         let moveSoundPlayer; // Novo player para o som de movimento
+        let checkSoundPlayer; // Novo player para o som de xeque
+        let checkmateSoundPlayer; // Novo player para o som de xeque-mate
 
         document.addEventListener('DOMContentLoaded', () => {
             captureSoundPlayer = new Tone.Player({
@@ -1153,6 +1167,20 @@
                 url: "https://dl.dropbox.com/scl/fi/a7lzwyo5o3ll87l5vu77j/wood-block-105066.mp3?rlkey=6fbvepxo0e48lrc9do48q3xts&st=38krftjs&dl=0", // URL atualizado
                 onload: () => console.log("Move sound loaded!"),
                 onerror: (e) => console.error("Error loading move sound:", e)
+            }).toDestination();
+
+            // Inicializa o Tone.Player para o som de xeque
+            checkSoundPlayer = new Tone.Player({
+                url: "https://dl.dropbox.com/scl/fi/pn27sxasgcwrvs8vh1jod/ding-sound-effect_2.mp3?rlkey=uekjc19kwjjb0wked1orjt314&st=ojpymiij&dl=0", // Exemplo de URL para som de xeque
+                onload: () => console.log("Check sound loaded!"),
+                onerror: (e) => console.error("Error loading check sound:", e)
+            }).toDestination();
+
+            // Inicializa o Tone.Player para o som de xeque-mate
+            checkmateSoundPlayer = new Tone.Player({
+                url: "https://dl.dropbox.com/scl/fi/qo8aicopyzour11ly3e8w/taco-bell-bong-sfx.mp3?rlkey=qz007si0s61vr6pwwp6r0fge4&st=l4kzec7j&dl=0", // Exemplo de URL para som de xeque-mate
+                onload: () => console.log("Checkmate sound loaded!"),
+                onerror: (e) => console.error("Error loading checkmate sound:", e)
             }).toDestination();
         });
 
@@ -1183,6 +1211,34 @@
                 moveSoundPlayer.start();
             } else {
                 console.warn("Move sound not loaded yet or player not initialized.");
+            }
+        }
+
+        /**
+         * Toca o som de xeque.
+         */
+        function playCheckSound() {
+            if (Tone.context.state !== 'running') {
+                Tone.start();
+            }
+            if (checkSoundPlayer && checkSoundPlayer.loaded) {
+                checkSoundPlayer.start();
+            } else {
+                console.warn("Check sound not loaded yet or player not initialized.");
+            }
+        }
+
+        /**
+         * Toca o som de xeque-mate.
+         */
+        function playCheckmateSound() {
+            if (Tone.context.state !== 'running') {
+                Tone.start();
+            }
+            if (checkmateSoundPlayer && checkmateSoundPlayer.loaded) {
+                checkmateSoundPlayer.start();
+            } else {
+                console.warn("Checkmate sound not loaded yet or player not initialized.");
             }
         }
 
@@ -1530,9 +1586,12 @@
             if (isCheckmate(currentPlayer)) {
                 gameOver = true;
                 statusElement.textContent = `Xeque-mate! ${currentPlayer === 'white' ? 'Pretas' : 'Brancas'} Venceram!`;
+                playCheckmateSound(); // Toca o som de xeque-mate
             } else if (isStalemate(currentPlayer)) {
                 gameOver = true;
                 statusElement.textContent = `Empate por Afogamento!`;
+            } else if (isKingInCheck(currentPlayer)) { // Verifica xeque se não for xeque-mate ou empate
+                playCheckSound(); // Toca o som de xeque
             }
 
             // Se o jogo não acabou e for a vez da IA, a IA faz a jogada
