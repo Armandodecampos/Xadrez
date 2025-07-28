@@ -355,6 +355,38 @@
                 padding: 10px;
             }
         }
+
+        /* Estilos para o efeito de explosão */
+        .explosion {
+            position: absolute;
+            width: 100%; /* Ocupa a largura da casa */
+            height: 100%; /* Ocupa a altura da casa */
+            background-color: rgba(255, 165, 0, 0.8); /* Laranja semi-transparente */
+            border-radius: 50%; /* Forma circular */
+            transform: scale(0); /* Começa invisível */
+            opacity: 0; /* Começa transparente */
+            animation: explode 0.4s ease-out forwards; /* Animação de explosão */
+            pointer-events: none; /* Não interfere com cliques no tabuleiro */
+            z-index: 50; /* Garante que esteja acima das peças */
+        }
+
+        @keyframes explode {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+                background-color: rgba(255, 165, 0, 0.8);
+            }
+            50% {
+                transform: scale(1.5); /* Expande para 150% do tamanho */
+                opacity: 1; /* Totalmente visível */
+                background-color: rgba(255, 69, 0, 0.9); /* Vermelho alaranjado */
+            }
+            100% {
+                transform: scale(2); /* Continua a expandir */
+                opacity: 0; /* Desaparece */
+                background-color: rgba(255, 255, 0, 0); /* Transparente */
+            }
+        }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen">
@@ -1121,6 +1153,33 @@
 
             if (!pieceElement) return; // Não deve acontecer se selectedPiece for válido
 
+            // Se houver uma peça capturada, cria e anima o efeito de explosão
+            if (capturedPieceChar) {
+                const capturedPieceElement = toSquareElement.querySelector('.piece');
+                if (capturedPieceElement) {
+                    // Remove a peça capturada do DOM imediatamente para que a explosão apareça no seu lugar
+                    capturedPieceElement.remove();
+
+                    // Cria o elemento de explosão
+                    const explosionElement = document.createElement('div');
+                    explosionElement.classList.add('explosion');
+                    // Posiciona o elemento de explosão sobre a casa de destino
+                    explosionElement.style.top = `${toSquareElement.offsetTop}px`;
+                    explosionElement.style.left = `${toSquareElement.offsetLeft}px`;
+                    explosionElement.style.width = `${toSquareElement.offsetWidth}px`;
+                    explosionElement.style.height = `${toSquareElement.offsetHeight}px`;
+                    
+                    // Adiciona o elemento de explosão ao contêiner do tabuleiro
+                    chessboardElement.appendChild(explosionElement);
+
+                    // Remove o elemento de explosão após a animação
+                    explosionElement.addEventListener('animationend', () => {
+                        explosionElement.remove();
+                    });
+                }
+            }
+
+
             // Determina a rotação vertical da peça com base no estado do tabuleiro
             const targetPieceRotation = (gameMode === 'player' && currentPlayer === 'black') ? 'rotate(180deg)' : 'rotate(0deg)';
 
@@ -1151,14 +1210,6 @@
 
             // Aplica a transformação combinada: translação primeiro, depois a rotação desejada
             pieceElement.style.transform = `translate(${offsetX}px, ${offsetY}px) ${targetPieceRotation}`;
-
-            // Lida com a peça capturada: remove-a imediatamente do DOM
-            if (capturedPieceChar) {
-                const capturedPieceElement = toSquareElement.querySelector('.piece');
-                if (capturedPieceElement) {
-                    capturedPieceElement.remove();
-                }
-            }
 
             // Após a animação, atualiza o array do tabuleiro e move o elemento da peça para o novo quadrado
             setTimeout(() => {
