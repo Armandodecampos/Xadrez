@@ -2,11 +2,21 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-2.0.0">
+    <!-- Meta tag da viewport corrigida para bloquear o zoom -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Jogo de Xadrez</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+        /* Garante que o HTML e o BODY ocupem 100% da viewport para que as unidades vh/vw/vmin funcionem corretamente */
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
         body {
             font-family: 'Inter', sans-serif;
@@ -15,12 +25,8 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            margin: 0;
             color: #e2e8f0;
-            padding: 0;
-            box-sizing: border-box;
-            width: 100vw;
-            overflow: hidden;
+            overflow: hidden; /* Impede barras de rolagem se o conteúdo exceder */
             background-color: #1a202c;
         }
 
@@ -38,7 +44,7 @@
             align-items: center;
             z-index: 9999; /* Garante que esteja acima de tudo */
             color: #e2e8f0;
-            font-size: 2rem;
+            font-size: 5vmin; /* Alterado para vmin */
             font-weight: bold;
             transition: opacity 0.5s ease-out; /* Transição suave ao desaparecer */
         }
@@ -49,13 +55,13 @@
         }
 
         .spinner {
-            border: 8px solid rgba(255, 255, 255, 0.3);
-            border-top: 8px solid #48bb78; /* Cor do spinner */
+            border: 1vmin solid rgba(255, 255, 255, 0.3); /* Alterado para vmin */
+            border-top: 1vmin solid #48bb78; /* Alterado para vmin */
             border-radius: 50%;
-            width: 60px;
-            height: 60px;
+            width: 7.5vmin; /* Alterado para vmin */
+            height: 7.5vmin; /* Alterado para vmin */
             animation: spin 1s linear infinite;
-            margin-bottom: 20px;
+            margin-bottom: 2vmin; /* Alterado para vmin */
         }
 
         @keyframes spin {
@@ -77,27 +83,29 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 0.5vmin; /* Preenchimento interno responsivo para o contêiner (reduzido) */
+            padding: 0.5vmin; /* Reintroduzido um pequeno padding em vmin */
             border-radius: 15px;
             /* Usando vmin para garantir que o contêiner se ajuste à menor dimensão da viewport */
-            width: 99vmin; /* Ligeiramente aumentado */
-            height: 99vmin; /* Ligeiramente aumentado */
-            max-width: 100vw; /* Garante que não exceda a largura da viewport */
-            max-height: 100vh; /* Garante que não exceda a altura da viewport */
+            width: 100%; /* Ocupa 100% da largura do pai */
+            height: 100%; /* Ocupa 100% da altura do pai */
+            max-width: 98vmin; /* Limita a largura máxima à menor dimensão da viewport */
+            max-height: 98vmin; /* Limita a altura máxima à menor dimensão da viewport */
             position: relative; /* Necessário para posicionamento absoluto do modal de promoção */
             box-sizing: border-box; /* Inclui padding na largura/altura */
-            gap: 0.5vmin; /* Espaçamento entre os itens flexíveis (status, tabuleiro e botões) (reduzido) */
+            gap: 0.5vmin; /* Reintroduzido um pequeno gap em vmin */
             overflow: hidden; /* Importante para cortar conteúdo que exceda, evitando barras de rolagem no contêiner */
             justify-content: space-between; /* Distribui o espaço verticalmente */
             align-self: center; /* Centraliza o game-container se o body for maior */
             z-index: 1; /* Garante que esteja acima do fundo da tela inicial */
+            background-color: #2d3748; /* Adicionar um fundo para visualização */
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* Adicionar uma sombra para destacar */
         }
 
         .chessboard {
             display: grid;
             grid-template-columns: repeat(8, 1fr); /* Colunas responsivas */
             grid-template-rows: repeat(8, 1fr); /* Linhas responsivas */
-            border: 4px solid #4a5568;
+            border: 0.5vmin solid #4a5568; /* Alterado para vmin */
             border-radius: 8px;
             overflow: hidden; /* Garante que os cantos arredondados se apliquem às casas */
             box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
@@ -110,6 +118,8 @@
             min-height: 0; /* Impede que o item flexível transborde seu contêiner */
             transform-origin: center center; /* Garante que a rotação e o dimensionamento sejam do centro */
             /* A transformação inicial será definida pelo JavaScript */
+            max-width: 100%; /* Garante que o tabuleiro não exceda a largura do contêiner */
+            max-height: 100%; /* Garante que o tabuleiro não exceda a altura do contêiner */
         }
 
         /* Animação para rotação e encolhimento (0 a 180 graus) */
@@ -168,8 +178,8 @@
 
         .piece {
             cursor: grab;
-            /* Esta linha garante que o tamanho da peça seja responsivo */
-            font-size: min(6vw, 50px); /* Tamanho responsivo da peça, ajustado para preencher melhor */
+            /* Tamanho responsivo da peça, agora sem limite mínimo/máximo explícito além do vmin */
+            font-size: 5vmin; /* Alterado de 30px para 8vmin */
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
             transition: transform 0.1s ease-out;
         }
@@ -198,7 +208,7 @@
         }
 
         .status-message {
-            font-size: min(4vmin, 1.5rem); /* Tamanho da fonte responsivo para mensagem de status */
+            font-size: 4vmin; /* Alterado para vmin */
             font-weight: bold;
             text-align: center;
             color: #a0aec0; /* Cinza mais claro para status */
@@ -217,9 +227,9 @@
         .game-button {
             background-color: #4299e1; /* Botão azul */
             color: white;
-            padding: min(1.5vmin, 12px) min(3vmin, 25px); /* Preenchimento responsivo */
+            padding: 1.5vmin 3vmin; /* Alterado para vmin */
             border-radius: 10px;
-            font-size: min(2.5vmin, 1.1rem); /* Tamanho da fonte responsivo */
+            font-size: 2.5vmin; /* Alterado para vmin */
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.2s ease;
             box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
@@ -246,7 +256,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: min(6vmin, 40px); /* Preenchimento responsivo */
+            padding: 6vmin; /* Alterado para vmin */
             border-radius: 15px;
             max-width: 500px;
             width: 100%;
@@ -258,9 +268,9 @@
         .menu-button {
             background-color: #48bb78; /* Botão verde */
             color: white;
-            padding: min(2.5vmin, 15px) min(5vmin, 30px); /* Preenchimento responsivo */
+            padding: 2.5vmin 5vmin; /* Alterado para vmin */
             border-radius: 10px;
-            font-size: min(3.5vmin, 1.3rem); /* Tamanho da fonte responsivo */
+            font-size: 3.5vmin; /* Alterado para vmin */
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.2s ease;
             box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
@@ -291,7 +301,7 @@
             left: 50%;
             transform: translate(-50%, -50%);
             background-color: #2d3748;
-            padding: min(4vmin, 25px); /* Preenchimento responsivo */
+            padding: 4vmin; /* Alterado para vmin */
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
             z-index: 1000;
@@ -299,11 +309,11 @@
             flex-direction: column;
             align-items: center;
             gap: 15px;
-            border: 2px solid #4a5568;
+            border: 0.25vmin solid #4a5568; /* Alterado para vmin */
         }
 
         .promotion-modal h3 {
-            font-size: min(4vmin, 1.8rem); /* Tamanho da fonte responsivo */
+            font-size: 4vmin; /* Alterado para vmin */
             font-weight: bold;
             color: #e2e8f0;
             margin-bottom: 10px;
@@ -319,15 +329,15 @@
         .promotion-button {
             background-color: #48bb78; /* Botão verde */
             color: white;
-            padding: min(2.5vmin, 15px); /* Preenchimento responsivo */
+            padding: 2.5vmin; /* Alterado para vmin */
             border-radius: 10px;
-            font-size: min(5vmin, 2.5rem); /* Tamanho da fonte responsivo */
+            font-size: 5vmin; /* Alterado para vmin */
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.2s ease;
             box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
             border: none;
-            width: min(10vmin, 70px); /* Largura responsiva */
-            height: min(10vmin, 70px); /* Altura responsiva */
+            width: 10vmin; /* Alterado para vmin */
+            height: 10vmin; /* Alterado para vmin */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -1516,7 +1526,8 @@
                 }
             });
 
-            currentPlayer = originalCurrentPlayer; // Reverte para o jogador atual original
+            // Reverte para o jogador atual original
+            currentPlayer = originalCurrentPlayer;
             return legalMoves;
         }
 
@@ -2298,8 +2309,8 @@
                 if (originalPiece === 'k') simulatedCastlingFlags.blackKingMoved = true;
                 if (originalPiece === 'R' && fromR === 7 && fromC === 0) simulatedCastlingFlags.whiteRookLeftMoved = true;
                 if (originalPiece === 'R' && fromR === 7 && fromC === 7) simulatedCastlingFlags.whiteRookRightMoved = true;
-                if (originalPiece === 'r' && fromR === 0 && c === 0) simulatedCastlingFlags.blackRookLeftMoved = true;
-                if (originalPiece === 'r' && fromR === 0 && c === 7) simulatedCastlingFlags.blackRookRightMoved = true;
+                if (originalPiece === 'r' && fromR === 0 && fromC === 0) simulatedCastlingFlags.blackRookLeftMoved = true;
+                if (originalPiece === 'r' && fromR === 0 && fromC === 7) simulatedCastlingFlags.blackRookRightMoved = true;
 
 
                 // Se for um movimento de roque, também move a torre no tabuleiro simulado
@@ -2382,6 +2393,13 @@
             updateHistoryButtons();
             updateStatus();
         }
+
+        // Listener de evento para tentar bloquear o zoom com Ctrl + roda do mouse
+        window.addEventListener('wheel', (e) => {
+            if (e.ctrlKey) { // Verifica se a tecla Ctrl (ou Cmd no Mac) está pressionada
+                e.preventDefault(); // Impede o comportamento padrão de zoom do navegador
+            }
+        }, { passive: false }); // Use { passive: false } para garantir que preventDefault() funcione
 
         // Listeners de eventos para os botões
         resetButton.addEventListener('click', () => initializeNewGame(gameMode)); // Reset irá reinicializar no modo atual
