@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Jogo de Xadrez</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inclui a biblioteca Tone.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
 
@@ -1135,6 +1137,55 @@
             return piece === piece.toLowerCase();
         }
 
+        // Inicializa o Tone.Player para o som de captura
+        let captureSoundPlayer;
+        let moveSoundPlayer; // Novo player para o som de movimento
+
+        document.addEventListener('DOMContentLoaded', () => {
+            captureSoundPlayer = new Tone.Player({
+                url: "https://dl.dropbox.com/scl/fi/3oi7r4pwkef5fyvpz0ake/sword-slash-and-swing-185432.mp3?rlkey=wr2uuldegryfofsspu849i51d&st=l3v9qgdy&dl=0", // URL atualizado
+                onload: () => console.log("Capture sound loaded!"),
+                onerror: (e) => console.error("Error loading capture sound:", e)
+            }).toDestination();
+
+            // Inicializa o Tone.Player para o som de movimento
+            moveSoundPlayer = new Tone.Player({
+                url: "https://dl.dropbox.com/scl/fi/a7lzwyo5o3ll87l5vu77j/wood-block-105066.mp3?rlkey=6fbvepxo0e48lrc9do48q3xts&st=38krftjs&dl=0", // URL atualizado
+                onload: () => console.log("Move sound loaded!"),
+                onerror: (e) => console.error("Error loading move sound:", e)
+            }).toDestination();
+        });
+
+        /**
+         * Toca o som de captura.
+         */
+        function playCaptureSound() {
+            // Garante que o contexto de áudio esteja ativo antes de tocar
+            if (Tone.context.state !== 'running') {
+                Tone.start();
+            }
+            if (captureSoundPlayer && captureSoundPlayer.loaded) {
+                captureSoundPlayer.start();
+            } else {
+                console.warn("Capture sound not loaded yet or player not initialized.");
+            }
+        }
+
+        /**
+         * Toca o som de movimento.
+         */
+        function playMoveSound() {
+            // Garante que o contexto de áudio esteja ativo antes de tocar
+            if (Tone.context.state !== 'running') {
+                Tone.start();
+            }
+            if (moveSoundPlayer && moveSoundPlayer.loaded) {
+                moveSoundPlayer.start();
+            } else {
+                console.warn("Move sound not loaded yet or player not initialized.");
+            }
+        }
+
         /**
          * Faz um movimento no tabuleiro com animação.
          * @param {number} fromRow - Linha de partida.
@@ -1153,7 +1204,7 @@
 
             if (!pieceElement) return; // Não deve acontecer se selectedPiece for válido
 
-            // Se houver uma peça capturada, cria e anima o efeito de explosão
+            // Se houver uma peça capturada, cria e anima o efeito de explosão E toca o som de captura
             if (capturedPieceChar) {
                 const capturedPieceElement = toSquareElement.querySelector('.piece');
                 if (capturedPieceElement) {
@@ -1176,7 +1227,12 @@
                     explosionElement.addEventListener('animationend', () => {
                         explosionElement.remove();
                     });
+
+                    playCaptureSound(); // Toca o som de captura
                 }
+            } else {
+                // Se não houve captura, toca o som de movimento
+                playMoveSound();
             }
 
 
@@ -1316,6 +1372,9 @@
 
             const kingEndSquare = chessboardElement.querySelector(`[data-row="${kingEndRow}"][data-col="${kingFinalCol}"]`);
             const rookEndSquare = chessboardElement.querySelector(`[data-row="${kingEndRow}"][data-col="${rookFinalCol}"]`);
+
+            // Toca o som de movimento para o roque
+            playMoveSound();
 
             // Determina a rotação vertical das peças com base no estado do tabuleiro
             const targetPieceRotation = (gameMode === 'player' && currentPlayer === 'black') ? 'rotate(180deg)' : 'rotate(0deg)';
