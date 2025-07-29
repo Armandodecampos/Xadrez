@@ -81,22 +81,59 @@
             z-index: 0; /* Garante que esteja atrás do conteúdo */
         }
 
-        .game-container {
+        /* Novo contêiner para o layout principal do jogo (tabuleiro + controles) */
+        #gameLayout {
+            display: flex;
+            flex-direction: column; /* Padrão para coluna em telas pequenas */
+            align-items: center;
+            justify-content: center;
+            gap: 8vmin; /* Espaçamento entre os elementos */
+            padding: 4vmin;
+            width: 100%;
+            height: 100%; /* Garante que ocupe a altura total do body */
+            max-width: 1200px; /* Limite de largura para o layout */
+            margin: auto; /* Centraliza horizontalmente */
+            z-index: 1;
+        }
+
+        @media (min-width: 1024px) { /* Em telas maiores (lg) */
+            #gameLayout {
+                flex-direction: row; /* Muda para linha */
+                align-items: flex-start; /* Alinha os itens ao topo na linha */
+                justify-content: center;
+            }
+        }
+
+        /* Contêiner dos controles do jogo (status + botões) */
+        #gameControls {
             display: flex;
             flex-direction: column;
             align-items: center;
-            /* Usando vmin para garantir que o contêiner se ajuste à menor dimensão da viewport */
-            width: 100%; /* Ocupa 100% da largura do pai */
-            aspect-ratio:1/1;
+            justify-content: space-between; /* Empurra status para cima e botões para baixo */
+            width: 100%; /* Ocupa largura total em telas pequenas */
+        }
+
+        @media (min-width: 1024px) { /* Em telas maiores (lg) */
+            #gameControls {
+                width: 25%; /* Ocupa 1/4 da largura */
+                height: auto; /* Altura automática */
+                /* min-height: 600px; Removido para maior flexibilidade */
+            }
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column; /* Mantém para o modal de promoção */
+            align-items: center;
+            justify-content: center; /* Centraliza o tabuleiro dentro dele */
+            width: 100%;
+            aspect-ratio: 1/1; /* Garante que o contêiner seja um quadrado */
             position: relative; /* Necessário para posicionamento absoluto do modal de promoção */
-            box-sizing: border-box; /* Inclui padding na largura/altura */
-            gap: 0.5vmin; /* Reintroduzido um pequeno gap em vmin */
-            overflow: hidden; /* Importante para cortar conteúdo que exceda, evitando barras de rolagem no contêiner */
-            justify-content: space-between; /* Distribui o espaço verticalmente */
-            align-self: center; /* Centraliza o game-container se o body for maior */
-            z-index: 1; /* Garante que esteja acima do fundo da tela inicial */
-            margin-top:50px;
-            margin-bottom:50px;
+            box-sizing: border-box;
+            overflow: hidden;
+            flex-grow: 1; /* Permite que o tabuleiro cresça para preencher o espaço disponível */
+            flex-shrink: 1;
+            flex-basis: 0;
         }
 
         .chessboard {
@@ -106,42 +143,11 @@
             border: 0.5vmin solid #4a5568; /* Alterado para vmin */
             overflow: hidden; /* Garante que os cantos arredondados se apliquem às casas */
             box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
-            /* Removido transition: transform, pois a animação @keyframes irá controlá-lo */
+            width:100%;
             aspect-ratio: 1 / 1; /* CRUCIAL: Garante que o tabuleiro seja um quadrado */
-            flex-grow: 1; /* Permite que o tabuleiro cresça para preencher o espaço disponível */
-            flex-shrink: 1; /* Permite que o tabuleiro encolha se necessário */
-            flex-basis: 0; /* Permite que o item flexível defina sua base como 0 e cresça */
-            min-width: 0; /* Necessário para itens flexíveis */
-            min-height: 0; /* Impede que o item flexível transborde seu contêiner */
-            transform-origin: center center; /* Garante que a rotação e o dimensionamento sejam do centro */
-            /* A transformação inicial será definida pelo JavaScript */
-            max-width: 100%; /* Garante que o tabuleiro não exceda a largura do contêiner */
-            max-height: 100%; /* Garante que o tabuleiro não exceda a altura do contêiner */
         }
 
-        /* Animação para rotação e encolhimento (0 a 180 graus) */
-        @keyframes rotate-and-shrink-forward {
-            0% { transform: rotate(0deg) scale(1); }
-            50% { transform: rotate(90deg) scale(0.7); } /* Encolhe no meio da rotação */
-            100% { transform: rotate(180deg) scale(1); } /* Volta ao tamanho normal no final da rotação */
-        }
-
-        /* Animação para rotação e encolhimento (180 a 0 graus) */
-        @keyframes rotate-and-shrink-backward {
-            0% { transform: rotate(180deg) scale(1); } /* Começa da posição rotacionada */
-            50% { transform: rotate(270deg) scale(0.7); } /* Encolhe no meio (90 deg a mais que 180) */
-            100% { transform: rotate(360deg) scale(1); } /* Volta à posição original (0 deg) */
-        }
-
-        /* Aplica a animação quando a classe animating-forward é adicionada */
-        .chessboard.animating-forward {
-            animation: rotate-and-shrink-forward 0.8s ease-in-out forwards; /* 'forwards' mantém o estado final da animação */
-        }
-
-        /* Aplica a animação quando a classe animating-backward é adicionada */
-        .chessboard.animating-backward {
-            animation: rotate-and-shrink-backward 0.8s ease-in-out forwards; /* 'forwards' mantém o estado final da animação */
-        }
+        /* Removidas as animações de rotação do tabuleiro */
 
         .square {
             width: 100%; /* Casas preenchem suas células de grade */
@@ -202,15 +208,16 @@
             text-align: center;
             color: #a0aec0; /* Cinza mais claro para status */
             flex-shrink: 0; /* Impede que a mensagem de status encolha */
+            margin-bottom: 2vmin; /* Espaçamento abaixo da mensagem de status */
         }
 
         .control-buttons {
             display: flex;
-            gap: 1vmin; /* Espaçamento responsivo entre os botões */
+            gap: 1.5vmin; /* Espaçamento responsivo entre os botões */
             flex-wrap: wrap; /* Permite que os botões quebrem em telas menores */
             justify-content: center;
             flex-shrink: 0; /* Impede que os botões encolham */
-            margin-top: 3.5vmin; /* Margem responsiva */
+            margin-top: 2vmin; /* Margem responsiva */
         }
 
         .game-button {
@@ -222,6 +229,7 @@
             transition: background-color 0.3s ease, transform 0.2s ease;
             box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
             border: none;
+            border-radius: 0.5rem; /* Cantos arredondados */
         }
 
         .game-button:hover:not(:disabled) {
@@ -246,23 +254,25 @@
             align-items: center;
             padding: 6vmin; /* Alterado para vmin */
             max-width: 500px;
-            width: 100%;
+            width: 90%;
             text-align: center;
             background-color: rgba(26, 32, 44, 0.8); /* Fundo semi-transparente para o menu */
             z-index: 1; /* Garante que esteja acima do fundo */
+            border-radius: 1rem; /* Cantos arredondados */
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5); /* Sombra */
         }
 
         .menu-button {
             background-color: #48bb78; /* Botão verde */
             color: white;
             padding: 2.5vmin 5vmin; /* Alterado para vmin */
-            font-size: 3.5vmin; /* Alterado para vmin */
             cursor: pointer;
             transition: background-color 0.3s ease, transform 0.2s ease;
             box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
             border: none;
             width: 80%;
             margin-bottom: 1.5vmin; /* Margem responsiva */
+            border-radius: 0.5rem; /* Cantos arredondados */
         }
 
         .menu-button:hover {
@@ -295,6 +305,7 @@
             align-items: center;
             gap: 15px;
             border: 0.25vmin solid #4a5568; /* Alterado para vmin */
+            border-radius: 1rem; /* Cantos arredondados */
         }
 
         .promotion-modal h3 {
@@ -325,6 +336,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            border-radius: 0.5rem; /* Cantos arredondados */
         }
 
         .promotion-button:hover {
@@ -356,6 +368,9 @@
                 font-size: 2rem;
                 padding: 10px;
             }
+            .piece {
+            font-size: 7vmin; /* Alterado de 30px para 8vmin */
+        }
         }
 
         /* Estilos para o efeito de explosão */
@@ -390,16 +405,14 @@
             }
         }
 
-        /* Adicionado media query para empilhar botões em telas menores */
-        @media (max-width: 768px) {
-            .control-buttons {
-                flex-direction: column; /* Empilha os botões verticalmente */
-                align-items: center; /* Centraliza os botões horizontalmente na coluna */
-            }
-            .game-button {
-                width: 100%; /* Faz com que os botões ocupem a largura total disponível */
-                max-width: 250px; /* Opcional: limita a largura máxima para não ficarem muito largos em tablets */
-            }
+        /* Media query para a resolução entre 700px e 1023px de largura e 866px de altura */
+        @media (min-width: 630px) and (max-width: 1023px) and (min-height: 866px) {
+            .chessboard {
+            width:60%;
+        }
+        .piece {
+            font-size: 4vmin; /* Alterado de 30px para 8vmin */
+        }
         }
     </style>
 </head>
@@ -415,27 +428,35 @@
 
     <!-- Seção do Menu Principal -->
     <div id="mainMenu" class="main-menu z-10 hidden">
-        <h1 class="text-4xl font-bold mb-8 text-white">Jogo de Xadrez</h1>
-        <button id="playVsComputerBtn" class="menu-button">Um Jogador</button>
-        <button id="playVsPlayerBtn" class="menu-button">Dois Jogadores</button>
+        <h1 class="text-3xl font-bold mb-8 text-white">Jogo de Xadrez</h1>
+        <button id="playVsComputerBtn" class="menu-button text-2xl">Um Jogador</button>
+        <button id="playVsPlayerBtn" class="menu-button text-2xl">Dois Jogadores</button>
     </div>
 
-    <!-- Seção do Contêiner do Jogo (inicialmente oculta) -->
-    <div id="gameContainer" class="game-container hidden z-10">
-        <div id="status" class="status-message">Vez das Brancas</div>
-        <div id="chessboard" class="chessboard"></div>
-        <div class="control-buttons">
-            <button id="undoButton" class="game-button">Voltar Jogada</button>
-            <button id="redoButton" class="game-button">Prosseguir Jogada</button>
-            <button id="resetButton" class="game-button">Reiniciar Jogo</button>
-            <button id="backToMenuButton" class="game-button">Voltar ao Menu</button>
+    <!-- Novo contêiner para o layout do jogo (tabuleiro + controles) -->
+    <div id="gameLayout" class="flex flex-col lg:flex-row items-center justify-center gap-8 p-4 w-full max-w-screen-xl mx-auto hidden z-10">
+
+        <!-- Painel de Informações e Controles do Jogo -->
+        <div id="gameControls">
+            <div class="control-buttons mt-auto">
+                <button id="undoButton" class="game-button text-2xl">Voltar Jogada</button>
+                <button id="redoButton" class="game-button text-2xl">Prosseguir Jogada</button>
+                <button id="resetButton" class="game-button text-2xl">Reiniciar Jogo</button>
+                <button id="backToMenuButton" class="game-button text-2xl">Voltar ao Menu</button>
+            </div>
+            <br>
+            <div id="status" class="status-message mb-auto text-2xl">Vez das Brancas</div>
         </div>
 
-        <!-- Modal de Promoção de Peão (inicialmente oculto) -->
-        <div id="promotionModal" class="promotion-modal hidden">
-            <h3>Escolha a peça para promoção:</h3>
-            <div class="promotion-options" id="promotionOptions">
-                <!-- Os botões de promoção serão inseridos aqui pelo JavaScript -->
+        <!-- Contêiner do Jogo (agora exclusivamente para o tabuleiro) -->
+        <div id="gameContainer" class="game-container">
+            <div id="chessboard" class="chessboard"></div>
+            <!-- Modal de Promoção de Peão (permanece dentro do gameContainer para posicionamento relativo) -->
+            <div id="promotionModal" class="promotion-modal hidden">
+                <h3>Escolha a peça para promoção:</h3>
+                <div class="promotion-options" id="promotionOptions">
+                    <!-- Os botões de promoção serão inseridos aqui pelo JavaScript -->
+                </div>
             </div>
         </div>
     </div>
@@ -482,7 +503,8 @@
 
         const loadingScreenElement = document.getElementById('loadingScreen'); // Novo elemento
         const mainMenuElement = document.getElementById('mainMenu');
-        const gameContainerElement = document.getElementById('gameContainer');
+        const gameLayoutElement = document.getElementById('gameLayout'); // Novo elemento para o layout principal do jogo
+        const gameContainerElement = document.getElementById('gameContainer'); // Agora contém apenas o tabuleiro
         const chessboardElement = document.getElementById('chessboard');
         const statusElement = document.getElementById('status');
         const resetButton = document.getElementById('resetButton');
@@ -676,7 +698,11 @@
          */
         function showMainMenu() {
             mainMenuElement.classList.remove('hidden');
-            gameContainerElement.classList.add('hidden');
+            mainMenuElement.style.display = 'flex'; // Garante que o menu principal seja exibido como flex
+
+            gameLayoutElement.classList.add('hidden');
+            gameLayoutElement.style.display = 'none'; // Garante que o layout do jogo esteja oculto
+
             mainMenuBackgroundElement.classList.remove('hidden'); // Mostra o fundo da tela inicial
         }
 
@@ -685,7 +711,11 @@
          */
         function showGame() {
             mainMenuElement.classList.add('hidden');
-            gameContainerElement.classList.remove('hidden');
+            mainMenuElement.style.display = 'none'; // Garante que o menu principal esteja oculto
+
+            gameLayoutElement.classList.remove('hidden');
+            gameLayoutElement.style.display = 'flex'; // Garante que o layout do jogo seja exibido como flex
+
             mainMenuBackgroundElement.classList.add('hidden'); // Oculta o fundo da tela inicial
         }
 
@@ -751,7 +781,7 @@
                     updateHistoryButtons();
                     console.log(`Estado do jogo para ${modeToLoad} carregado do localStorage.`);
 
-                    // Aplica a rotação do tabuleiro com base no jogador carregado (com ou sem animação, dependendo do contexto)
+                    // Aplica a rotação do tabuleiro com base no jogador carregado (sem animação, pois foi removida)
                     applyBoardRotation(currentPlayer);
 
 
@@ -809,9 +839,7 @@
             updateHistoryButtons();
 
             // Garante que o tabuleiro não esteja rotacionado no início de um novo jogo
-            chessboardElement.classList.remove('animating-forward', 'animating-backward');
-            chessboardElement.style.transform = 'rotate(0deg)'; // Sempre começa em 0deg
-            void chessboardElement.offsetWidth; // Força reflow para garantir que o reset da transformação seja aplicado imediatamente
+            applyBoardRotation(currentPlayer); // Aplica a rotação inicial (que agora é instantânea)
 
             // Se iniciar contra o computador, e for a vez das pretas (vez da IA), a IA faz a jogada
             if (gameMode === 'computer' && currentPlayer === 'black') {
@@ -882,7 +910,7 @@
                 updateHistoryButtons();
                 saveGameToLocalStorage(); // Salva no localStorage após carregar um estado histórico
 
-                // Aplica a rotação do tabuleiro com base no jogador carregado (com animação)
+                // Aplica a rotação do tabuleiro com base no jogador carregado (sem animação)
                 applyBoardRotation(currentPlayer);
             }
         }
@@ -942,8 +970,8 @@
                         pieceElement.innerHTML = PIECES[piece];
 
                         // Aplica a rotação inicial da peça para que ela esteja sempre na vertical
-                        const pieceInitialRotation = (gameMode === 'player' && currentPlayer === 'black') ? 'rotate(180deg)' : 'rotate(0deg)';
-                        pieceElement.style.transform = pieceInitialRotation;
+                        // Isso será ajustado por applyBoardRotation para o jogador atual
+                        pieceElement.style.transform = 'rotate(0deg)';
 
                         square.appendChild(pieceElement);
                     }
@@ -1074,8 +1102,7 @@
                 pieceElement.className = ''; // Limpa as classes existentes
                 pieceElement.classList.add('piece', isWhitePiece(chosenPiece) ? 'white-piece' : 'black-piece');
                 // Garante que a peça promovida esteja na vertical
-                const pieceRotation = (gameMode === 'player' && currentPlayer === 'black') ? 'rotate(180deg)' : 'rotate(0deg)';
-                pieceElement.style.transform = pieceRotation;
+                pieceElement.style.transform = (gameMode === 'player' && currentPlayer === 'black') ? 'rotate(180deg)' : 'rotate(0deg)';
             }
 
             promotionModal.classList.add('hidden'); // Oculta o modal
@@ -1171,14 +1198,14 @@
 
             // Inicializa o Tone.Player para o som de xeque
             checkSoundPlayer = new Tone.Player({
-                url: "https://dl.dropbox.com/scl/fi/pn27sxasgcwrvs8vh1jod/ding-sound-effect_2.mp3?rlkey=uekjc19kwjjb0wked1orjt314&st=ojpymiij&dl=0", // Exemplo de URL para som de xeque
+                url: "https://dl.dropbox.com/scl/fi/pn27sxasgcwrvs8vh1jod/ding-sound-effect_2.mp3?rlkey=uekjc19kwjjb0wked1orjt314&st=tlgzsdn8&dl=0",
                 onload: () => console.log("Check sound loaded!"),
                 onerror: (e) => console.error("Error loading check sound:", e)
             }).toDestination();
 
             // Inicializa o Tone.Player para o som de xeque-mate
             checkmateSoundPlayer = new Tone.Player({
-                url: "https://dl.dropbox.com/scl/fi/qo8aicopyzour11ly3e8w/taco-bell-bong-sfx.mp3?rlkey=qz007si0s61vr6pwwp6r0fge4&st=l4kzec7j&dl=0", // Exemplo de URL para som de xeque-mate
+                url: "https://dl.dropbox.com/scl/fi/qo8aicopyzour11ly3e8w/taco-bell-bong-sfx.mp3?rlkey=qz007si0s61vr6pwwp6r0fge4&st=dyxvpj8a&dl=0", // URL do som de xeque-mate
                 onload: () => console.log("Checkmate sound loaded!"),
                 onerror: (e) => console.error("Error loading checkmate sound:", e)
             }).toDestination();
@@ -1292,7 +1319,7 @@
             }
 
 
-            // Determina a rotação vertical da peça com base no estado do tabuleiro
+            // Determina a rotação vertical da peça para que ela permaneça na vertical em relação ao jogador
             const targetPieceRotation = (gameMode === 'player' && currentPlayer === 'black') ? 'rotate(180deg)' : 'rotate(0deg)';
 
             // Calcula a translação necessária para a animação
@@ -1302,7 +1329,7 @@
             let offsetX = toRect.left - fromRect.left;
             let offsetY = toRect.top - fromRect.top;
 
-            // Ajusta os offsets se o tabuleiro estiver rotacionado para o jogador preto
+            // Ajusta os offsets se o tabuleiro estiver invertido para o jogador preto (no modo dois jogadores)
             if (gameMode === 'player' && currentPlayer === 'black') {
                 offsetX = -offsetX; // Inverte o eixo X
                 offsetY = -offsetY; // Inverte o eixo Y
@@ -1432,7 +1459,7 @@
             // Toca o som de movimento para o roque
             playMoveSound();
 
-            // Determina a rotação vertical das peças com base no estado do tabuleiro
+            // Determina a rotação vertical das peças para que elas permaneçam na vertical em relação ao jogador
             const targetPieceRotation = (gameMode === 'player' && currentPlayer === 'black') ? 'rotate(180deg)' : 'rotate(0deg)';
 
             // Calcula o deslocamento da animação do rei
@@ -1447,7 +1474,7 @@
             let rookOffsetX = rookToRect.left - rookFromRect.left;
             let rookOffsetY = rookToRect.top - rookFromRect.top;
 
-            // Ajusta os offsets se o tabuleiro estiver rotacionado para o jogador preto
+            // Ajusta os offsets se o tabuleiro estiver invertido para o jogador preto (no modo dois jogadores)
             if (gameMode === 'player' && currentPlayer === 'black') {
                 kingOffsetX = -kingOffsetX;
                 kingOffsetY = -kingOffsetY;
@@ -1490,9 +1517,9 @@
                 // Atualiza o hash Zobrist para o roque
                 currentZobristHash ^= ZOBRIST_TABLE[kingPieceChar][kingStartRow][kingStartCol];
                 currentZobristHash ^= ZOBRIST_TABLE[kingPieceChar][kingEndRow][kingFinalCol];
-                currentZobristHash ^= ZOBRIST_TABLE[rookPieceChar][kingEndRow][rookOriginalCol];
-                currentZobristHash ^= ZOBRIST_TABLE[rookPieceChar][kingEndRow][rookFinalCol];
-                currentZobristHash ^= ZOBRIST_TABLE.turn[currentPlayer]; // Corrigido: Estava faltando o operador ^=
+                currentZobristHash ^= ZOBRIST_TABLE[rookPieceChar][kingEndRow][rookOriginalCol]; // Corrigido: Estava faltando o operador ^=
+                currentZobristHash ^= ZOBRIST_TABLE[rookPieceChar][kingEndRow][rookFinalCol]; // Corrigido: Estava faltando o operador ^=
+                currentZobristHash ^= ZOBRIST_TABLE.turn[currentPlayer];
                 const newPlayer = currentPlayer === 'white' ? 'black' : 'white';
                 currentZobristHash ^= ZOBRIST_TABLE.turn[newPlayer];
 
@@ -1525,53 +1552,35 @@
 
         /**
          * Aplica a rotação do tabuleiro com base no jogador atual e no modo de jogo.
-         * Gerencia as classes de animação para transições suaves.
+         * A rotação é instantânea, sem animação.
+         * As peças são contra-rotacionadas para permanecerem na vertical.
          * @param {string} playerToRotateTo - O jogador para o qual o tabuleiro deve ser orientado ('white' ou 'black').
          */
         function applyBoardRotation(playerToRotateTo) {
-            // Remove ambas as classes de animação para garantir que a animação possa ser re-acionada
-            chessboardElement.classList.remove('animating-forward', 'animating-backward');
+            let boardRotation = 'rotate(0deg)';
+            let pieceCounterRotation = 'rotate(0deg)';
 
-            if (gameMode === 'player') {
-                // Define a transformação inicial para a animação
+            if (gameMode === 'player') { // Somente no modo de dois jogadores
+                // No modo de dois jogadores, inverte o tabuleiro para o jogador preto
                 if (playerToRotateTo === 'black') {
-                    // Se o tabuleiro deve ir para 180deg (preto), começa de 0deg
-                    chessboardElement.style.transform = 'rotate(0deg)';
-                    void chessboardElement.offsetWidth; // Força reflow
-                    chessboardElement.classList.add('animating-forward'); // Anima para 180deg
-                } else { // playerToRotateTo === 'white'
-                    // Se o tabuleiro deve ir para 0deg (branco), começa de 180deg
-                    chessboardElement.style.transform = 'rotate(180deg)';
-                    void chessboardElement.offsetWidth; // Força reflow
-                    chessboardElement.classList.add('animating-backward'); // Anima para 0deg
+                    boardRotation = 'rotate(180deg)';
+                    pieceCounterRotation = 'rotate(180deg)';
                 }
-
-                // Atualiza a rotação de todas as peças para que permaneçam na vertical
-                const pieceElements = chessboardElement.querySelectorAll('.piece');
-                const pieceTargetRotation = (playerToRotateTo === 'black') ? 'rotate(180deg)' : 'rotate(0deg)';
-
-                pieceElements.forEach(pieceEl => {
-                    // Garante uma transição suave para a rotação da peça também
-                    pieceEl.style.transition = 'transform 0.8s ease-in-out'; // Corresponde à duração da animação do tabuleiro
-                    pieceEl.style.transform = pieceTargetRotation;
-                });
-
-                // Após a animação, remove a propriedade de transição para evitar interferência com as animações de movimento
-                setTimeout(() => {
-                    pieceElements.forEach(pieceEl => {
-                        pieceEl.style.transition = ''; // Reinicia para o padrão (0.3s para movimento)
-                    });
-                }, 800); // Corresponde à duração da animação do tabuleiro
-            } else {
-                // No modo computador, sempre garante rotação de 0deg sem animação
-                chessboardElement.style.transform = 'rotate(0deg)';
-                // Garante que todas as peças estejam na vertical (rotação de 0deg) no modo computador
-                const pieceElements = chessboardElement.querySelectorAll('.piece');
-                pieceElements.forEach(pieceEl => {
-                    pieceEl.style.transform = 'rotate(0deg)';
-                    pieceEl.style.transition = ''; // Reinicia a transição
-                });
             }
+            // No modo de um jogador (computer), o tabuleiro e as peças sempre ficam em 0deg (perspectiva do branco)
+
+            // Aplica a rotação do tabuleiro (instantânea)
+            chessboardElement.style.transition = 'none'; // Garante que não haja transição
+            chessboardElement.style.transform = boardRotation;
+            void chessboardElement.offsetWidth; // Força reflow para aplicar a mudança imediatamente
+
+            // Atualiza a rotação de todas as peças para que permaneçam na vertical (contra-rotação)
+            const pieceElements = chessboardElement.querySelectorAll('.piece');
+            pieceElements.forEach(pieceEl => {
+                pieceEl.style.transition = 'none'; // Garante que não haja transição
+                pieceEl.style.transform = pieceCounterRotation;
+                void pieceEl.offsetWidth; // Força reflow
+            });
         }
 
         /**
@@ -1579,7 +1588,7 @@
          */
         function switchPlayer() {
             currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
-            applyBoardRotation(currentPlayer); // Aplica a rotação do tabuleiro
+            applyBoardRotation(currentPlayer); // Aplica a rotação do tabuleiro (agora instantânea)
             updateStatus();
 
             // Verifica xeque-mate/empate por afogamento aqui
@@ -1590,7 +1599,7 @@
             } else if (isStalemate(currentPlayer)) {
                 gameOver = true;
                 statusElement.textContent = `Empate por Afogamento!`;
-            } else if (isKingInCheck(currentPlayer)) { // Verifica xeque se não for xeque-mate ou empate
+            } else if (isKingInCheck(currentPlayer)) { // Verifica se o rei do jogador atual está em xeque
                 playCheckSound(); // Toca o som de xeque
             }
 
@@ -2630,8 +2639,8 @@
                 if (originalPiece === 'k') simulatedCastlingFlags.blackKingMoved = true;
                 if (originalPiece === 'R' && fromR === 7 && fromC === 0) simulatedCastlingFlags.whiteRookLeftMoved = true;
                 if (originalPiece === 'R' && fromR === 7 && fromC === 7) simulatedCastlingFlags.whiteRookRightMoved = true;
-                if (originalPiece === 'r' && fromR === 0 && fromC === 0) simulatedCastlingFlags.blackRookLeftMoved = true;
-                if (originalPiece === 'r' && fromR === 0 && fromC === 7) simulatedCastlingFlags.blackRookRightMoved = true;
+                if (originalPiece === 'r' && fromR === 0 && c === 0) simulatedCastlingFlags.blackRookLeftMoved = true;
+                if (originalPiece === 'r' && r === 0 && c === 7) simulatedCastlingFlags.blackRookRightMoved = true;
 
 
                 // Se for um movimento de roque, também move a torre no tabuleiro simulado
@@ -2734,8 +2743,10 @@
         document.addEventListener('DOMContentLoaded', () => {
             initializeZobristTable(); // Inicializa a tabela Zobrist uma vez ao carregar
             // Oculta o menu principal e o contêiner do jogo até que a tela de carregamento desapareça
-            mainMenuElement.classList.add('hidden');
-            gameContainerElement.classList.add('hidden');
+            mainMenuElement.classList.add('hidden'); // Garante que o menu principal esteja oculto
+            mainMenuElement.style.display = 'none'; // Explicitamente define o display para none
+            gameLayoutElement.classList.add('hidden'); // Garante que o layout do jogo esteja oculto
+            gameLayoutElement.style.display = 'none'; // Explicitamente define o display para none
             loadingScreenElement.classList.remove('hidden'); // Garante que a tela de carregamento esteja visível
 
             // Precarrega a imagem de fundo e só então esconde a tela de carregamento
