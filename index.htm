@@ -920,9 +920,20 @@
          * Desfaz a última jogada.
          */
         function undoMove() {
-            if (historyPointer > 0) {
-                historyPointer--;
-                loadState(historyPointer);
+            if (gameMode === 'computer') {
+                // No modo computador, queremos voltar duas jogadas (IA + Jogador)
+                if (historyPointer >= 2) {
+                    historyPointer -= 2;
+                    loadState(historyPointer);
+                } else if (historyPointer === 1) { // Se estiver na jogada da IA, volta para a jogada do jogador
+                    historyPointer--;
+                    loadState(historyPointer);
+                }
+            } else { // Modo dois jogadores
+                if (historyPointer > 0) {
+                    historyPointer--;
+                    loadState(historyPointer);
+                }
             }
         }
 
@@ -930,9 +941,20 @@
          * Refaz uma jogada previamente desfeita.
          */
         function redoMove() {
-            if (historyPointer < gameHistory.length - 1) {
-                historyPointer++;
-                loadState(historyPointer);
+            if (gameMode === 'computer') {
+                // No modo computador, queremos avançar duas jogadas (Jogador + IA)
+                if (historyPointer <= gameHistory.length - 3) { // Verifica se há pelo menos duas jogadas à frente
+                    historyPointer += 2;
+                    loadState(historyPointer);
+                } else if (historyPointer === gameHistory.length - 2) { // Se estiver uma jogada antes do final
+                    historyPointer++;
+                    loadState(historyPointer);
+                }
+            } else { // Modo dois jogadores
+                if (historyPointer < gameHistory.length - 1) {
+                    historyPointer++;
+                    loadState(historyPointer);
+                }
             }
         }
 
@@ -940,8 +962,20 @@
          * Atualiza o estado habilitado/desabilitado dos botões de desfazer/refazer.
          */
         function updateHistoryButtons() {
-            undoButton.disabled = historyPointer <= 0 || isThinking;
-            redoButton.disabled = historyPointer >= gameHistory.length - 1 || isThinking;
+            // Lógica para o botão "Desfazer"
+            if (gameMode === 'computer') {
+                undoButton.disabled = historyPointer < 1 || isThinking; // Desabilita se estiver no início ou IA pensando
+            } else { // Modo dois jogadores
+                undoButton.disabled = historyPointer <= 0 || isThinking;
+            }
+
+            // Lógica para o botão "Refazer"
+            if (gameMode === 'computer') {
+                redoButton.disabled = historyPointer >= gameHistory.length - 1 || isThinking;
+            } else { // Modo dois jogadores
+                redoButton.disabled = historyPointer >= gameHistory.length - 1 || isThinking;
+            }
+
             // Também desabilita toda a interação do tabuleiro se o jogo acabou ou a IA está pensando ou o modal de promoção está aberto
             if (gameOver || isThinking || !promotionModal.classList.contains('hidden')) {
                 chessboardElement.style.pointerEvents = 'none';
@@ -2640,6 +2674,7 @@
                 if (originalPiece === 'k') simulatedCastlingFlags.blackKingMoved = true;
                 if (originalPiece === 'R' && fromR === 7 && fromC === 0) simulatedCastlingFlags.whiteRookLeftMoved = true;
                 if (originalPiece === 'R' && fromR === 7 && fromC === 7) simulatedCastlingFlags.whiteRookRightMoved = true;
+                // FIX: Changed 'c' to 'fromC' for black rook flags
                 if (originalPiece === 'r' && fromR === 0 && fromC === 0) simulatedCastlingFlags.blackRookLeftMoved = true;
                 if (originalPiece === 'r' && fromR === 0 && fromC === 7) simulatedCastlingFlags.blackRookRightMoved = true;
 
